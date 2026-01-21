@@ -1,0 +1,14 @@
+/* Ensure all elements take up full height and width */
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Reset box-sizing for consistent layout */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+
