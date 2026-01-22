@@ -1,13 +1,11 @@
-import './App.css'
-import {
-  Box,
-  styled,
-} from "@mui/material";
-import AppHeader from './components/AppHeader';
-import SplitArea from './components/SplitArea';
-import Sidebar from './components/SIdebar';
-import DawEditor from './components/DawEditor';
-
+import "./App.css";
+import { Box, styled } from "@mui/material";
+import AppHeader from "./components/AppHeader";
+import SplitArea from "./components/SplitArea";
+import Sidebar from "./components/SIdebar";
+import DawEditor from "./components/DawEditor";
+import AudioEngineProvider from "./contexts/AudioEngineContext";
+import TrackDataStoreProvider from "./contexts/TrackDataStoreContext";
 
 export const MainContainer = styled(Box)({
   padding: "0",
@@ -17,20 +15,20 @@ export const MainContainer = styled(Box)({
   height: "100%",
   boxSizing: "border-box",
   display: "flex",
-  flexFlow: "column"
-
+  flexFlow: "column",
 });
 
-
-
 function App() {
-
   return (
     <MainContainer>
-      <AppHeader/>
-      <SplitArea left={<Sidebar/>} right={<DawEditor/>}/>
+      <TrackDataStoreProvider>
+        <AudioEngineProvider>
+          <AppHeader />
+          <SplitArea left={<Sidebar />} right={<DawEditor />} />
+        </AudioEngineProvider>
+      </TrackDataStoreProvider>
     </MainContainer>
-  )
+  );
 }
 
-export default App
+export default App;
