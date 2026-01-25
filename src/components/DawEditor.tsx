@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import TrackArea from "./TrackArea";
 import PlayHeader from "./PlayHeader";
 import { useTrackDataStore } from "../contexts/TrackDataStoreContext";
+import DawRuler from "./DawRuler";
 
 const DawEditorContainer = styled(Box)({
   padding: "0",
@@ -85,6 +86,7 @@ const DawEditor = () => {
           options={{ backgroundColor: 0x1e1e1e, antialias: true }}
           style={{ display: "block", width: "100%", height: "100%" }}
         >
+          <DawRuler width={size.width} height={80} />
           <TrackArea width={size.width} tracks={tracks} />
         </Stage>
       </TrackContainer>
