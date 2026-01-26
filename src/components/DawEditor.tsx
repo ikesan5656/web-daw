@@ -12,6 +12,7 @@ import PlayHeader from "./PlayHeader";
 import { useTrackDataStore } from "../contexts/TrackDataStoreContext";
 import DawRuler from "./DawRuler";
 import { useContainerSize } from "../hooks/useContainerSize";
+import { TRACK_HEADER_WIDTH } from "../util/trackSettings";
 
 // ... (スタイル定義 DawEditorContainer, TrackContainer はそのまま) ...
 const DawEditorContainer = styled(Box)({
@@ -56,9 +57,6 @@ const DawEditor = () => {
   const unitHeight = TRACK_HEIGHT + BORDER_HEIGHT;
   const contentHeight = TRACK_AREA_OFFSET_Y + tracks.size * unitHeight + 200;
 
-  // ... (handleScroll, handleDragOver, handleDrop はそのまま) ...
-
-  // 省略しましたが、前回の handleScroll などをここに記述してください
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     setScrollTop(e.currentTarget.scrollTop);
   }, []);
@@ -71,38 +69,47 @@ const DawEditor = () => {
 
       if (!containerRef.current || !trackAreaPixiRef.current) return;
 
-      // 1. 座標取得 (Stage全体でのマウス位置)
+      // 1. 座標取得
       const rect = containerRef.current.getBoundingClientRect();
       const globalX = e.clientX - rect.left;
       const globalY = e.clientY - rect.top;
 
-      // 2. toLocal変換 (スクロール等を加味したTrackArea内部座標)
+      // 2. toLocal変換
       const globalPoint = new PIXI.Point(globalX, globalY);
       const localPoint = trackAreaPixiRef.current.toLocal(globalPoint);
 
-      // 3. トラックインデックス計算
-      // localPoint.y は TrackAreaの原点(0)からの距離。
-      // TrackAreaはヘッダー(80px)の下から描画される前提になっている場合と、
-      // Header込みで描画している場合がありますが、
-      // 前回のTrackAreaの実装では `TrackList` は `posY={BORDER_HEIGHT + index * unit}` で配置されています。
+      // --- ここから範囲判定の追加 ---
 
-      // ヘッダー部分(Y < 0)にいる場合は表示しない
-      if (localPoint.y < 0) {
-        setDragPreview((prev) => ({ ...prev, isVisible: false }));
+      // TrackAreaのサイズを取得 (getBounds または直接のサイズ変数)
+      // getBounds()を使うと、スクロールやスケールを加味した現在の実サイズが取れます
+      //const bounds = trackAreaPixiRef.current.getBounds();
+
+      // ローカル座標での幅と高さを判定基準にする場合
+      // もし TrackArea に width/height プロパティを設定しているならそれを使います
+      const areaWidth = trackAreaPixiRef.current.width;
+      const areaHeight = tracks.size * unitHeight; // トラック全体の高さ
+
+      const isOutside =
+        localPoint.x < TRACK_HEADER_WIDTH ||
+        localPoint.x > areaWidth ||
+        localPoint.y < 0 ||
+        localPoint.y > areaHeight;
+
+      if (isOutside) {
+        setDragPreview((prev) => (prev.isVisible ? { ...prev, isVisible: false } : prev));
         return;
       }
 
-      const trackIndex = Math.floor(localPoint.y / unitHeight);
+      // --- 範囲判定ここまで ---
 
-      // トラック数を超えている場合は一番下に合わせるか、表示しない
+      const trackIndex = Math.floor(localPoint.y / unitHeight);
       const maxIndex = tracks.size - 1;
       const clampedIndex = Math.max(0, Math.min(trackIndex, maxIndex));
 
-      // 4. State更新
       setDragPreview({
         isVisible: true,
-        x: localPoint.x, // マウスのX座標に追従
-        trackIndex: clampedIndex, // トラックの行にスナップ
+        x: localPoint.x,
+        trackIndex: clampedIndex,
       });
     },
     [tracks.size, unitHeight, containerRef, trackAreaPixiRef]
@@ -119,17 +126,36 @@ const DawEditor = () => {
       const globalPoint = new PIXI.Point(globalX, globalY);
       const localPoint = trackAreaPixiRef.current.toLocal(globalPoint);
       //const droppedY = localPoint.y;
-      const droppedX = localPoint.x - 100;
+      if (localPoint.x < TRACK_HEADER_WIDTH) {
+        setDragPreview((prev) => {
+          return { ...prev, isVisible: false };
+        });
+        return;
+      }
+      const droppedX = localPoint.x - TRACK_HEADER_WIDTH;
       console.log(droppedX);
+      const trackIndex = Math.floor(localPoint.y / unitHeight);
+      console.log(tracks.size);
+      if (trackIndex > tracks.size - 1 || trackIndex < 0) {
+        console.log("範囲外");
+        return;
+      }
+      const currentTrack = getTrackFromIndex(trackIndex);
       setDragPreview((prev) => {
         return { ...prev, isVisible: false };
       });
-      const trackIndex = Math.floor(localPoint.y / unitHeight);
-      const currentTrack = getTrackFromIndex(trackIndex);
       addNote(currentTrack.id, droppedX, "add_test");
     },
-    [containerRef, unitHeight, getTrackFromIndex, addNote]
+    [containerRef, unitHeight, getTrackFromIndex, addNote, tracks]
   );
+
+  const onDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragPreview((prev) => {
+      return { ...prev, isVisible: false };
+    });
+  }, []);
 
   return (
     <DawEditorContainer>
@@ -140,6 +166,7 @@ const DawEditor = () => {
         onScroll={handleScroll}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
+        onDragLeave={onDragLeave}
       >
         {/* 1. ダミーの高さを持つdiv (スクロールバー生成用) */}
         <div style={{ height: contentHeight, width: "100%" }}>

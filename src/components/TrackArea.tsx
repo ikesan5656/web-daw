@@ -2,6 +2,7 @@ import { Container, Graphics, Text } from "@pixi/react";
 import { Fragment, memo, useCallback, type ReactNode } from "react";
 import * as PIXI from "pixi.js";
 import { type AudioTrack } from "../contexts/TrackDataStoreContext";
+import { TRACK_HEADER_WIDTH } from "../util/trackSettings";
 
 // ==========================================
 // 定数定義 (親コンポーネントでも計算に使うため export します)
@@ -142,7 +143,7 @@ const TrackHeader = memo(({ trackName, color }: TrackHeaderProps) => {
     (g: PIXI.Graphics) => {
       g.clear();
       g.beginFill(color);
-      g.drawRect(0, 0, 100, TRACK_HEIGHT);
+      g.drawRect(0, 0, TRACK_HEADER_WIDTH, TRACK_HEIGHT);
       g.endFill();
     },
     [color]
@@ -181,7 +182,7 @@ const TrackList = memo(({ width, tracks }: TrackListProps) => {
             {/* 1. トラック本体 */}
             <TrackContainer posY={trackY} width={width}>
               <TrackHeader trackName={track.trackName} color={0x000000} />
-              <Container position={[100, 0]}>
+              <Container position={[TRACK_HEADER_WIDTH, 0]}>
                 {Array.from(track.notes.values()).map((note) => {
                   return (
                     <TrackNote
@@ -217,7 +218,7 @@ const GhostNote = memo(({ x, trackIndex }: { x: number; trackIndex: number }) =>
     // 半透明の白枠 + 赤い縁取り
     g.lineStyle(2, 0xff0000, 0.8);
     g.beginFill(0xffffff, 0.3);
-    g.drawRect(0, 0, 100, TRACK_HEIGHT); // 100x50の矩形
+    g.drawRect(0, 0, 100, TRACK_HEIGHT);
     g.endFill();
   }, []);
 
