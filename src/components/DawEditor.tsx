@@ -1,11 +1,14 @@
 import { Box, styled } from "@mui/material";
 import { Stage } from "@pixi/react";
-import { useEffect, useRef, useState } from "react";
-import TrackArea from "./TrackArea";
+import * as PIXI from "pixi.js";
+import { useCallback, useRef, useState } from "react";
+import TrackArea, { TRACK_HEIGHT, BORDER_HEIGHT, TRACK_AREA_OFFSET_Y } from "./TrackArea";
 import PlayHeader from "./PlayHeader";
 import { useTrackDataStore } from "../contexts/TrackDataStoreContext";
 import DawRuler from "./DawRuler";
+import { useContainerSize } from "../hooks/useContainerSize";
 
+// ... (スタイル定義 DawEditorContainer, TrackContainer はそのまま) ...
 const DawEditorContainer = styled(Box)({
   padding: "0",
   margin: "0",
@@ -15,80 +18,108 @@ const DawEditorContainer = styled(Box)({
   display: "flex",
   flexFlow: "column",
   backgroundColor: "cyan",
-  //overflow: "hidden"
+  overflow: "hidden",
 });
-
-const totalHeight = 300;
 
 const TrackContainer = styled(Box)({
   padding: "0",
   margin: "0",
   width: "100%",
-  height: totalHeight,
+  height: "100%",
   boxSizing: "border-box",
-  display: "flex",
-  flexFlow: "row",
+  display: "block",
   backgroundColor: "#1e1e1e",
+  overflowY: "auto",
+  overflowX: "hidden",
+  position: "relative",
 });
 
 const DawEditor = () => {
   const { getTracksInfo } = useTrackDataStore();
   const tracks = getTracksInfo();
-  //console.log(tracks);
 
-  const containerRef = useRef<HTMLDivElement>(null);
+  const { ref: containerRef, size } = useContainerSize();
+  const trackAreaPixiRef = useRef<PIXI.Container>(null);
+  const [scrollTop, setScrollTop] = useState(0);
 
-  // 初期値は0にしておく
-  const [size, setSize] = useState({ width: 0, height: 300 });
+  const unitHeight = TRACK_HEIGHT + BORDER_HEIGHT;
+  const contentHeight = TRACK_AREA_OFFSET_Y + tracks.size * unitHeight + 200;
 
-  useEffect(() => {
-    const element = containerRef.current;
-    if (!element) return;
+  // ... (handleScroll, handleDragOver, handleDrop はそのまま) ...
 
-    // リサイズ監視用のオブザーバー
-    // requestAnimationFrame を使うことで、ブラウザの描画フレームと同期させる
-    let animationFrameId: number;
-
-    const observer = new ResizeObserver((entries) => {
-      // 既存の予定があればキャンセル（無駄な連打を防ぐ）
-      if (animationFrameId) cancelAnimationFrame(animationFrameId);
-
-      // 次の描画フレームでStateを更新する
-      animationFrameId = requestAnimationFrame(() => {
-        for (const entry of entries) {
-          // 小数点以下のピクセルズレを防ぐため Math.floor または Math.round を推奨
-          const newWidth = Math.floor(entry.contentRect.width);
-
-          setSize((prev) => {
-            // 実際に値が変わったときだけ更新してReactレンダリングを最小化
-            if (prev.width === newWidth) return prev;
-            return { ...prev, width: newWidth };
-          });
-        }
-      });
-    });
-
-    observer.observe(element);
-
-    return () => {
-      observer.disconnect();
-      if (animationFrameId) cancelAnimationFrame(animationFrameId);
-    };
+  // 省略しましたが、前回の handleScroll などをここに記述してください
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    setScrollTop(e.currentTarget.scrollTop);
   }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = "copy";
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!containerRef.current || !trackAreaPixiRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const globalX = e.clientX - rect.left;
+      const globalY = e.clientY - rect.top;
+      const globalPoint = new PIXI.Point(globalX, globalY);
+      const localPoint = trackAreaPixiRef.current.toLocal(globalPoint);
+      const droppedY = localPoint.y;
+      console.log(droppedY);
+      // ...以降のロジックは前回と同じ
+    },
+    [containerRef]
+  );
 
   return (
     <DawEditorContainer>
       <PlayHeader />
-      <TrackContainer ref={containerRef}>
-        <Stage
-          width={size.width}
-          height={totalHeight}
-          options={{ backgroundColor: 0x1e1e1e, antialias: true }}
-          style={{ display: "block", width: "100%", height: "100%" }}
-        >
-          <DawRuler width={size.width} height={80} />
-          <TrackArea width={size.width} tracks={tracks} />
-        </Stage>
+
+      <TrackContainer
+        ref={containerRef}
+        onScroll={handleScroll}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
+        {/* 1. ダミーの高さを持つdiv (スクロールバー生成用) */}
+        <div style={{ height: contentHeight, width: "100%" }}>
+          {/* 2. スティッキーコンテナ 
+            【重要修正】
+            height: "100%" ではなく、size.height (画面の高さ) を指定します。
+            これで「中身は5000pxあるけど、表示窓は300pxだよ」とブラウザに伝わり、
+            stickyが正しく機能して画面内に固定されます。
+          */}
+          <div
+            style={{
+              position: "sticky",
+              top: 0,
+              height: size.height, // ★ここを修正 (100% -> size.height)
+              overflow: "hidden",
+            }}
+          >
+            <Stage
+              width={size.width}
+              height={size.height}
+              options={{ backgroundColor: 0x1e1e1e, antialias: true }}
+              style={{ display: "block" }}
+            >
+              {/* 描画順序: TrackAreaを先に書く (奥) */}
+              <TrackArea
+                width={size.width}
+                tracks={tracks}
+                pixiRef={trackAreaPixiRef}
+                scrollTop={scrollTop}
+              />
+
+              {/* 描画順序: Rulerを後に書く (手前・最前面) */}
+              <DawRuler width={size.width} height={TRACK_AREA_OFFSET_Y} />
+            </Stage>
+          </div>
+        </div>
       </TrackContainer>
     </DawEditorContainer>
   );

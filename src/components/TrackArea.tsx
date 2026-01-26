@@ -4,10 +4,12 @@ import * as PIXI from "pixi.js";
 import { type AudioTrack } from "../contexts/TrackDataStoreContext";
 
 // ==========================================
-// 定数定義 (ここを変えれば全体が一括で変わります)
+// 定数定義 (親コンポーネントでも計算に使うため export します)
 // ==========================================
-const TRACK_HEIGHT = 50; // トラックの高さ
-const BORDER_HEIGHT = 3; // 線の太さ（高さ）
+export const TRACK_HEIGHT = 50; // トラックの高さ
+export const BORDER_HEIGHT = 3; // 線の太さ（高さ）
+export const TRACK_AREA_OFFSET_Y = 80; // 上部の余白（ルーラーの高さなど）
+
 const COLOR_BORDER = 0xffffff; // 線の色
 const COLOR_BG = 0xd3d3d3; // トラック背景色
 
@@ -17,18 +19,14 @@ const COLOR_BG = 0xd3d3d3; // トラック背景色
 interface TrackAreaProps {
   width: number;
   tracks: Map<string, AudioTrack>;
+  scrollTop: number; // ★追加: 親からのスクロール量
+  pixiRef: React.Ref<PIXI.Container>; // ★追加: 座標変換(toLocal)用
 }
 
 // セパレーター（線）用のProps
 interface TrackSeparatorProps {
   posY: number;
   width: number;
-}
-
-interface TrackContainerProps {
-  posY: number;
-  width: number;
-  children?: ReactNode;
 }
 
 interface TrackContainerProps {
@@ -76,7 +74,6 @@ const TrackSeparator = memo(({ posY, width }: TrackSeparatorProps) => {
 
 // ==========================================
 // 2. トラックコンテナ (背景のみ)
-// 枠線描画の責務を削除し、背景と子要素の表示に専念
 // ==========================================
 const TrackContainer = memo(({ posY, width, children }: TrackContainerProps) => {
   const drawBackground = useCallback(
@@ -93,7 +90,7 @@ const TrackContainer = memo(({ posY, width, children }: TrackContainerProps) => 
     <Container position={[0, posY]}>
       {/* 背景 */}
       <Graphics draw={drawBackground} />
-      {/* コンテンツ (TrackContent) */}
+      {/* コンテンツ */}
       {children}
     </Container>
   );
@@ -101,14 +98,12 @@ const TrackContainer = memo(({ posY, width, children }: TrackContainerProps) => 
 
 // ==========================================
 // 3. トラックコンテンツ (中身)
-// 位置合わせは親に任せ、ここではローカル座標(0,0)基準で描画
 // ==========================================
 const TrackNote = memo(({ noteName, color, posX }: TrackNoteProps) => {
   const drawRect = useCallback(
     (g: PIXI.Graphics) => {
       g.clear();
       g.beginFill(color);
-      // トラックの高さに合わせて描画
       g.drawRect(0, 0, 100, TRACK_HEIGHT);
       g.endFill();
     },
@@ -126,9 +121,7 @@ const TrackNote = memo(({ noteName, color, posX }: TrackNoteProps) => {
             fontSize: 14,
           })
         }
-        // 基準点を「左・上下中央」に設定
         anchor={[0, 0.5]}
-        // 左余白10px, 上下中央に配置
         x={10}
         y={TRACK_HEIGHT / 2}
       />
@@ -137,12 +130,11 @@ const TrackNote = memo(({ noteName, color, posX }: TrackNoteProps) => {
 });
 
 const TrackHeader = memo(({ trackName, color }: TrackHeaderProps) => {
-  console.log(`${trackName}再描画`);
+  // console.log(`${trackName}再描画`); // ログがうるさい場合はコメントアウト
   const drawRect = useCallback(
     (g: PIXI.Graphics) => {
       g.clear();
       g.beginFill(color);
-      // トラックの高さに合わせて描画
       g.drawRect(0, 0, 100, TRACK_HEIGHT);
       g.endFill();
     },
@@ -160,9 +152,7 @@ const TrackHeader = memo(({ trackName, color }: TrackHeaderProps) => {
             fontSize: 14,
           })
         }
-        // 基準点を「左・上下中央」に設定
         anchor={[0, 0.5]}
-        // 左余白10px, 上下中央に配置
         x={10}
         y={TRACK_HEIGHT / 2}
       />
@@ -171,17 +161,12 @@ const TrackHeader = memo(({ trackName, color }: TrackHeaderProps) => {
 });
 
 const TrackList = memo(({ width, tracks }: TrackListProps) => {
-  // 1セットの高さ
   const unitHeight = TRACK_HEIGHT + BORDER_HEIGHT;
 
   return (
     <Container>
       {Array.from(tracks.values()).map((track, index) => {
-        // Y座標の計算
-        // スタート位置は「一番上の線(3px)」の直下から始まるため、BORDER_HEIGHT を初期オフセットとして足す
         const trackY = BORDER_HEIGHT + index * unitHeight;
-
-        // 下線の位置 = トラックの位置 + トラックの高さ
         const bottomLineY = trackY + TRACK_HEIGHT;
 
         return (
@@ -190,7 +175,6 @@ const TrackList = memo(({ width, tracks }: TrackListProps) => {
             <TrackContainer posY={trackY} width={width}>
               <TrackHeader trackName={track.trackName} color={0x000000} />
               <Container position={[100, 0]}>
-                {/* Map の values（値）を配列に変換してから map する */}
                 {Array.from(track.notes.values()).map((note) => {
                   return (
                     <TrackNote
@@ -213,15 +197,28 @@ const TrackList = memo(({ width, tracks }: TrackListProps) => {
   );
 });
 
-const TrackArea = memo(({ width, tracks }: TrackAreaProps) => {
-  // 一番上の線: Y=0
+// ==========================================
+// 4. メインコンポーネント
+// Stageは親にあるので、ここは Container を返すだけにする
+// ==========================================
+const TrackArea = memo(({ width, tracks, scrollTop, pixiRef }: TrackAreaProps) => {
+  // スクロール位置の計算
+  // 開始位置(80px) - 現在のスクロール量
+  const currentY = TRACK_AREA_OFFSET_Y - scrollTop;
+
+  // 一番上の線: Y=0 (相対位置)
   const Y_TOP_LINE = 0;
 
   return (
-    <Container position={[0, 80]}>
+    <Container
+      ref={pixiRef} // ★親が toLocal するためのRef
+      position={[0, currentY]} // ★スクロール反映
+      eventMode="static" // 内部でのクリック等が必要になった場合のため
+    >
       {/* 1. 最上部のセパレーター */}
       <TrackSeparator posY={Y_TOP_LINE} width={width} />
 
+      {/* 2. トラックリスト */}
       <TrackList width={width} tracks={tracks} />
     </Container>
   );
