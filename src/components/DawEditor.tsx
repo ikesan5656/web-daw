@@ -13,6 +13,7 @@ import { useTrackDataStore } from "../contexts/TrackDataStoreContext";
 import DawRuler from "./DawRuler";
 import { useContainerSize } from "../hooks/useContainerSize";
 import { TRACK_HEADER_WIDTH } from "../util/trackSettings";
+import { useAudio } from "../contexts/AudioEngineContext";
 
 // ... (スタイル定義 DawEditorContainer, TrackContainer はそのまま) ...
 const DawEditorContainer = styled(Box)({
@@ -42,6 +43,7 @@ const TrackContainer = styled(Box)({
 
 const DawEditor = () => {
   const { getTracksInfo, getTrackFromIndex, addNote } = useTrackDataStore();
+  const { getAudioBufferFromFile } = useAudio();
   const tracks = getTracksInfo();
 
   const { ref: containerRef, size } = useContainerSize();
@@ -116,7 +118,7 @@ const DawEditor = () => {
   );
 
   const handleDrop = useCallback(
-    (e: React.DragEvent<HTMLDivElement>) => {
+    async (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
       e.stopPropagation();
       if (!containerRef.current || !trackAreaPixiRef.current) return;
@@ -133,20 +135,38 @@ const DawEditor = () => {
         return;
       }
       const droppedX = localPoint.x - TRACK_HEADER_WIDTH;
-      console.log(droppedX);
       const trackIndex = Math.floor(localPoint.y / unitHeight);
-      console.log(tracks.size);
+
       if (trackIndex > tracks.size - 1 || trackIndex < 0) {
-        console.log("範囲外");
+        // 範囲外の場合は処理を終了する
         return;
       }
+
       const currentTrack = getTrackFromIndex(trackIndex);
-      setDragPreview((prev) => {
-        return { ...prev, isVisible: false };
-      });
-      addNote(currentTrack.id, droppedX, "add_test");
+
+      const file = e.dataTransfer.files[0];
+      if (!file || !file.type.startsWith("audio/")) {
+        setDragPreview((prev) => {
+          return { ...prev, isVisible: false };
+        });
+        alert("音声ファイルをドロップしてください");
+        return;
+      }
+
+      // AudioBuffer変換
+      try {
+        const audioBuffer = await getAudioBufferFromFile(file);
+        console.log(audioBuffer);
+        addNote(currentTrack.id, droppedX, file.name, audioBuffer);
+      } catch (err) {
+        alert(err);
+      } finally {
+        setDragPreview((prev) => {
+          return { ...prev, isVisible: false };
+        });
+      }
     },
-    [containerRef, unitHeight, getTrackFromIndex, addNote, tracks]
+    [containerRef, unitHeight, getTrackFromIndex, addNote, tracks, getAudioBufferFromFile]
   );
 
   const onDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {

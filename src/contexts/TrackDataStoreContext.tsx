@@ -4,7 +4,12 @@ import { createContext, useCallback, useContext, useMemo, useState, type ReactNo
 type TrackDataStoreContextType = {
   addTrack: () => void;
   deleteTrack: (id: string) => void;
-  addNote: (trackId: string, posX: number, noteName: string) => Map<string, AudioTrack>;
+  addNote: (
+    trackId: string,
+    posX: number,
+    noteName: string,
+    audioBuffer: AudioBuffer
+  ) => Map<string, AudioTrack>;
   getTracksInfo: () => Map<string, AudioTrack>;
   getTrackFromIndex: (index: number) => AudioTrack;
 
@@ -95,7 +100,7 @@ const TrackDataStoreProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const addNote = useCallback(
-    (trackId: string, posX: number, noteName: string) => {
+    (trackId: string, posX: number, noteName: string, audioBuffer: AudioBuffer) => {
       setTracks((prev) => {
         const targetTrack = prev.get(trackId);
         if (!targetTrack) {
@@ -108,7 +113,7 @@ const TrackDataStoreProvider = ({ children }: { children: ReactNode }) => {
           id: newNoteId,
           noteName: noteName,
           posX: posX,
-          // audioBuffer: 必要ならここで初期化
+          audioBuffer: audioBuffer,
         };
 
         const newTracks = new Map(prev);
