@@ -14,7 +14,7 @@ export const HeaderContainer = styled(Box)({
 });
 
 const AppHeader = () => {
-  const { getTracksInfo, addTrack } = useTrackDataStore();
+  const { addTrack, getTrackFromIndex } = useTrackDataStore();
   const testClick = () => {
     /*playPiano(261.6); // ド
     playPiano(329.6); // ミ
@@ -23,7 +23,7 @@ const AppHeader = () => {
   };
 
   const test2 = () => {
-    console.log(getTracksInfo());
+    console.log(getTrackFromIndex(1));
   };
 
   return (

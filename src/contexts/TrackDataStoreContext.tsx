@@ -4,7 +4,10 @@ import { createContext, useCallback, useContext, useMemo, useState, type ReactNo
 type TrackDataStoreContextType = {
   addTrack: () => void;
   deleteTrack: (id: string) => void;
+  addNote: (trackId: string, posX: number, noteName: string) => Map<string, AudioTrack>;
   getTracksInfo: () => Map<string, AudioTrack>;
+  getTrackFromIndex: (index: number) => AudioTrack;
+
   // その他必要な関数を追加
 };
 
@@ -91,17 +94,62 @@ const TrackDataStoreProvider = ({ children }: { children: ReactNode }) => {
     });
   }, []);
 
+  const addNote = useCallback(
+    (trackId: string, posX: number, noteName: string) => {
+      setTracks((prev) => {
+        const targetTrack = prev.get(trackId);
+        if (!targetTrack) {
+          console.warn(`Track not found: ${trackId}`);
+          return prev;
+        }
+
+        const newNoteId = crypto.randomUUID();
+        const newNote: AudioNote = {
+          id: newNoteId,
+          noteName: noteName,
+          posX: posX,
+          // audioBuffer: 必要ならここで初期化
+        };
+
+        const newTracks = new Map(prev);
+        const updatedTrack = { ...targetTrack };
+
+        const newNotes = new Map(targetTrack.notes);
+        newNotes.set(newNoteId, newNote);
+
+        updatedTrack.notes = newNotes;
+
+        newTracks.set(trackId, updatedTrack);
+
+        return newTracks;
+      });
+
+      return tracks;
+    },
+    [tracks]
+  );
+
   const getTracksInfo = useCallback(() => {
     return tracks;
   }, [tracks]);
+
+  const getTrackFromIndex = useCallback(
+    (index: number) => {
+      const tracksArray = Array.from(tracks.values());
+      return tracksArray[index];
+    },
+    [tracks]
+  );
 
   const contextValue = useMemo(
     () => ({
       addTrack,
       deleteTrack,
+      addNote,
       getTracksInfo,
+      getTrackFromIndex,
     }),
-    [addTrack, deleteTrack, getTracksInfo]
+    [addTrack, deleteTrack, addNote, getTracksInfo, getTrackFromIndex]
   );
 
   return (

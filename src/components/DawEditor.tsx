@@ -40,7 +40,7 @@ const TrackContainer = styled(Box)({
 });
 
 const DawEditor = () => {
-  const { getTracksInfo } = useTrackDataStore();
+  const { getTracksInfo, getTrackFromIndex, addNote } = useTrackDataStore();
   const tracks = getTracksInfo();
 
   const { ref: containerRef, size } = useContainerSize();
@@ -118,17 +118,17 @@ const DawEditor = () => {
       const globalY = e.clientY - rect.top;
       const globalPoint = new PIXI.Point(globalX, globalY);
       const localPoint = trackAreaPixiRef.current.toLocal(globalPoint);
-      const droppedY = localPoint.y;
-      console.log(droppedY);
+      //const droppedY = localPoint.y;
+      const droppedX = localPoint.x - 100;
+      console.log(droppedX);
       setDragPreview((prev) => {
         return { ...prev, isVisible: false };
       });
       const trackIndex = Math.floor(localPoint.y / unitHeight);
-      console.log(trackIndex);
-
-      // ...以降のロジックは前回と同じ
+      const currentTrack = getTrackFromIndex(trackIndex);
+      addNote(currentTrack.id, droppedX, "add_test");
     },
-    [containerRef, unitHeight]
+    [containerRef, unitHeight, getTrackFromIndex, addNote]
   );
 
   return (
