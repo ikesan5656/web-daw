@@ -21,6 +21,7 @@ interface TrackAreaProps {
   tracks: Map<string, AudioTrack>;
   scrollTop: number; // ★追加: 親からのスクロール量
   pixiRef: React.Ref<PIXI.Container>; // ★追加: 座標変換(toLocal)用
+  dragPreview: DragPreviewState;
 }
 
 // セパレーター（線）用のProps
@@ -49,6 +50,12 @@ interface TrackNoteProps {
 interface TrackListProps {
   width: number;
   tracks: Map<string, AudioTrack>;
+}
+
+export interface DragPreviewState {
+  isVisible: boolean;
+  x: number; // ローカルX座標
+  trackIndex: number; // 何番目のトラックか
 }
 
 // ==========================================
@@ -197,11 +204,35 @@ const TrackList = memo(({ width, tracks }: TrackListProps) => {
   );
 });
 
+const GhostNote = memo(({ x, trackIndex }: { x: number; trackIndex: number }) => {
+  const unitHeight = TRACK_HEIGHT + BORDER_HEIGHT;
+
+  // Y座標の計算:
+  // (トラック番号 * 1ユニットの高さ) + 線(border)の高さ
+  // これにより、線の上に重ならず、トラックの内側に綺麗に収まります
+  const y = trackIndex * unitHeight + BORDER_HEIGHT;
+
+  const draw = useCallback((g: PIXI.Graphics) => {
+    g.clear();
+    // 半透明の白枠 + 赤い縁取り
+    g.lineStyle(2, 0xff0000, 0.8);
+    g.beginFill(0xffffff, 0.3);
+    g.drawRect(0, 0, 100, TRACK_HEIGHT); // 100x50の矩形
+    g.endFill();
+  }, []);
+
+  return (
+    <Container position={[x, y]}>
+      <Graphics draw={draw} />
+    </Container>
+  );
+});
+
 // ==========================================
 // 4. メインコンポーネント
 // Stageは親にあるので、ここは Container を返すだけにする
 // ==========================================
-const TrackArea = memo(({ width, tracks, scrollTop, pixiRef }: TrackAreaProps) => {
+const TrackArea = memo(({ width, tracks, scrollTop, pixiRef, dragPreview }: TrackAreaProps) => {
   // スクロール位置の計算
   // 開始位置(80px) - 現在のスクロール量
   const currentY = TRACK_AREA_OFFSET_Y - scrollTop;
@@ -220,6 +251,9 @@ const TrackArea = memo(({ width, tracks, scrollTop, pixiRef }: TrackAreaProps) =
 
       {/* 2. トラックリスト */}
       <TrackList width={width} tracks={tracks} />
+
+      {/* ★ ドラッグ中のみゴーストを表示 */}
+      {dragPreview.isVisible && <GhostNote x={dragPreview.x} trackIndex={dragPreview.trackIndex} />}
     </Container>
   );
 });

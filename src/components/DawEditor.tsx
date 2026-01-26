@@ -2,7 +2,12 @@ import { Box, styled } from "@mui/material";
 import { Stage } from "@pixi/react";
 import * as PIXI from "pixi.js";
 import { useCallback, useRef, useState } from "react";
-import TrackArea, { TRACK_HEIGHT, BORDER_HEIGHT, TRACK_AREA_OFFSET_Y } from "./TrackArea";
+import TrackArea, {
+  TRACK_HEIGHT,
+  BORDER_HEIGHT,
+  TRACK_AREA_OFFSET_Y,
+  type DragPreviewState,
+} from "./TrackArea";
 import PlayHeader from "./PlayHeader";
 import { useTrackDataStore } from "../contexts/TrackDataStoreContext";
 import DawRuler from "./DawRuler";
@@ -41,6 +46,12 @@ const DawEditor = () => {
   const { ref: containerRef, size } = useContainerSize();
   const trackAreaPixiRef = useRef<PIXI.Container>(null);
   const [scrollTop, setScrollTop] = useState(0);
+  // ★ドラッグプレビュー用のState
+  const [dragPreview, setDragPreview] = useState<DragPreviewState>({
+    isVisible: false,
+    x: 0,
+    trackIndex: 0,
+  });
 
   const unitHeight = TRACK_HEIGHT + BORDER_HEIGHT;
   const contentHeight = TRACK_AREA_OFFSET_Y + tracks.size * unitHeight + 200;
@@ -52,11 +63,50 @@ const DawEditor = () => {
     setScrollTop(e.currentTarget.scrollTop);
   }, []);
 
-  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    e.dataTransfer.dropEffect = "copy";
-  }, []);
+  const handleDragOver = useCallback(
+    (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      e.dataTransfer.dropEffect = "copy";
+
+      if (!containerRef.current || !trackAreaPixiRef.current) return;
+
+      // 1. 座標取得 (Stage全体でのマウス位置)
+      const rect = containerRef.current.getBoundingClientRect();
+      const globalX = e.clientX - rect.left;
+      const globalY = e.clientY - rect.top;
+
+      // 2. toLocal変換 (スクロール等を加味したTrackArea内部座標)
+      const globalPoint = new PIXI.Point(globalX, globalY);
+      const localPoint = trackAreaPixiRef.current.toLocal(globalPoint);
+
+      // 3. トラックインデックス計算
+      // localPoint.y は TrackAreaの原点(0)からの距離。
+      // TrackAreaはヘッダー(80px)の下から描画される前提になっている場合と、
+      // Header込みで描画している場合がありますが、
+      // 前回のTrackAreaの実装では `TrackList` は `posY={BORDER_HEIGHT + index * unit}` で配置されています。
+
+      // ヘッダー部分(Y < 0)にいる場合は表示しない
+      if (localPoint.y < 0) {
+        setDragPreview((prev) => ({ ...prev, isVisible: false }));
+        return;
+      }
+
+      const trackIndex = Math.floor(localPoint.y / unitHeight);
+
+      // トラック数を超えている場合は一番下に合わせるか、表示しない
+      const maxIndex = tracks.size - 1;
+      const clampedIndex = Math.max(0, Math.min(trackIndex, maxIndex));
+
+      // 4. State更新
+      setDragPreview({
+        isVisible: true,
+        x: localPoint.x, // マウスのX座標に追従
+        trackIndex: clampedIndex, // トラックの行にスナップ
+      });
+    },
+    [tracks.size, unitHeight, containerRef, trackAreaPixiRef]
+  );
 
   const handleDrop = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
@@ -70,9 +120,15 @@ const DawEditor = () => {
       const localPoint = trackAreaPixiRef.current.toLocal(globalPoint);
       const droppedY = localPoint.y;
       console.log(droppedY);
+      setDragPreview((prev) => {
+        return { ...prev, isVisible: false };
+      });
+      const trackIndex = Math.floor(localPoint.y / unitHeight);
+      console.log(trackIndex);
+
       // ...以降のロジックは前回と同じ
     },
-    [containerRef]
+    [containerRef, unitHeight]
   );
 
   return (
@@ -113,6 +169,7 @@ const DawEditor = () => {
                 tracks={tracks}
                 pixiRef={trackAreaPixiRef}
                 scrollTop={scrollTop}
+                dragPreview={dragPreview}
               />
 
               {/* 描画順序: Rulerを後に書く (手前・最前面) */}
