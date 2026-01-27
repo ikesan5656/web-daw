@@ -9,7 +9,6 @@ import TrackArea, {
   type DragPreviewState,
 } from "./TrackArea";
 import PlayHeader from "./PlayHeader";
-import { useTrackDataStore } from "../contexts/TrackDataStoreContext";
 import DawRuler from "./DawRuler";
 import { useContainerSize } from "../hooks/useContainerSize";
 import { TRACK_HEADER_WIDTH } from "../util/trackSettings";
@@ -42,8 +41,7 @@ const TrackContainer = styled(Box)({
 });
 
 const DawEditor = () => {
-  const { getTracksInfo, getTrackFromIndex, addNote } = useTrackDataStore();
-  const { getAudioBufferFromFile } = useAudio();
+  const { getAudioBufferFromFile, getTracksInfo, getTrackFromIndex, addNote } = useAudio();
   const tracks = getTracksInfo();
 
   const { ref: containerRef, size } = useContainerSize();

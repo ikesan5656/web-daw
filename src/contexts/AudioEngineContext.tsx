@@ -4,21 +4,73 @@ import {
   useRef,
   useCallback,
   useMemo,
+  useState,
   type ReactNode,
   useEffect,
 } from "react";
 //import { useTrackDataStore } from "./TrackDataStoreContext";
 
 // コンテキストの型定義
-type AudioContextType = {
+export interface AudioContextType {
   playTone: (frequency: number) => void;
   playPiano: (frequency: number) => void;
   initialize: () => Promise<void>;
   getAudioBufferFromFile: (file: File) => Promise<AudioBuffer>;
   play: (buffer: AudioBuffer, when: number, offset: number, trackNode: GainNode) => void;
   getContext: () => AudioContext | null;
-  // その他必要な関数を追加
-};
+  addTrack: () => void;
+  deleteTrack: (id: string) => void;
+  addNote: (
+    trackId: string,
+    posX: number,
+    noteName: string,
+    audioBuffer: AudioBuffer
+  ) => Map<string, AudioTrack>;
+  getTracksInfo: () => Map<string, AudioTrack>;
+  getTrackFromIndex: (index: number) => AudioTrack;
+}
+interface AudioNote {
+  id: string;
+  noteName: string;
+  posX: number;
+  audioBuffer?: AudioBuffer;
+}
+
+export interface AudioTrack {
+  id: string;
+  trackName: string;
+  notes: Map<string, AudioNote>;
+}
+
+const defaultNotes = new Map<string, AudioNote>([
+  [
+    "defaultNode_1",
+    {
+      id: "defaultNode_1",
+      noteName: "test1",
+      posX: 50,
+    },
+  ],
+  [
+    "defaultNode_2",
+    {
+      id: "defaultNode_2",
+      noteName: "test2",
+      posX: 200,
+    },
+  ],
+]);
+
+const defaultTracks = new Map<string, AudioTrack>([
+  [
+    "default_id",
+    {
+      id: "default_id",
+      trackName: "default_track",
+      notes: defaultNotes,
+    },
+  ],
+]);
 
 // webkitAudioContext定義追加
 declare global {
@@ -30,6 +82,67 @@ declare global {
 const AudioContext = createContext<AudioContextType | null>(null);
 
 const AudioEngineProvider = ({ children }: { children: ReactNode }) => {
+  const [tracks, setTracks] = useState<Map<string, AudioTrack>>(defaultTracks);
+  const addTrack = useCallback(() => {
+    setTracks((prev) => {
+      const newId = crypto.randomUUID();
+      const newTrack: AudioTrack = {
+        id: newId,
+        trackName: `track_${prev.size + 1}`,
+        notes: new Map<string, AudioNote>(),
+      };
+      const newTracks = new Map(prev);
+      newTracks.set(newId, newTrack);
+      return newTracks;
+    });
+  }, []);
+
+  const deleteTrack = useCallback((id: string) => {
+    setTracks((prev) => {
+      const newTracks = new Map(prev);
+      newTracks.delete(id);
+      return newTracks;
+    });
+  }, []);
+
+  const addNote = useCallback(
+    (trackId: string, posX: number, noteName: string, audioBuffer: AudioBuffer) => {
+      setTracks((prev) => {
+        const targetTrack = prev.get(trackId);
+        if (!targetTrack) {
+          return prev;
+        }
+        const newNoteId = crypto.randomUUID();
+        const newNote: AudioNote = {
+          id: newNoteId,
+          noteName: noteName,
+          posX: posX,
+          audioBuffer: audioBuffer,
+        };
+        const newTracks = new Map(prev);
+        const updatedTrack = { ...targetTrack };
+        const newNotes = new Map(targetTrack.notes);
+        newNotes.set(newNoteId, newNote);
+        updatedTrack.notes = newNotes;
+        newTracks.set(trackId, updatedTrack);
+        return newTracks;
+      });
+      return tracks;
+    },
+    [tracks]
+  );
+
+  const getTracksInfo = useCallback(() => {
+    return tracks;
+  }, [tracks]);
+
+  const getTrackFromIndex = useCallback(
+    (index: number) => {
+      const tracksArray = Array.from(tracks.values());
+      return tracksArray[index];
+    },
+    [tracks]
+  );
   // ポイント1: AudioContextの実体は useRef で持つ (Stateにしない)
   // これにより、AudioContextの中身が変わってもReactの再描画は発生しない
   //const { addTrack } = useTrackDataStore();
@@ -173,8 +286,25 @@ const AudioEngineProvider = ({ children }: { children: ReactNode }) => {
       getAudioBufferFromFile,
       play,
       getContext,
+      addTrack,
+      deleteTrack,
+      addNote,
+      getTracksInfo,
+      getTrackFromIndex,
     }),
-    [initialize, playTone, playPiano, getAudioBufferFromFile, play, getContext]
+    [
+      initialize,
+      playTone,
+      playPiano,
+      getAudioBufferFromFile,
+      play,
+      getContext,
+      addTrack,
+      deleteTrack,
+      addNote,
+      getTracksInfo,
+      getTrackFromIndex,
+    ]
   );
 
   return <AudioContext.Provider value={contextValue}>{children}</AudioContext.Provider>;

@@ -1,5 +1,4 @@
 import { Box, styled } from "@mui/material";
-import { useTrackDataStore } from "../contexts/TrackDataStoreContext";
 import { useAudio } from "../contexts/AudioEngineContext";
 
 export const HeaderContainer = styled(Box)({
@@ -15,7 +14,7 @@ export const HeaderContainer = styled(Box)({
 });
 
 const AppHeader = () => {
-  const { getTrackFromIndex } = useTrackDataStore();
+  const { getTrackFromIndex } = useAudio();
   const { getContext } = useAudio();
   const testClick = () => {
     /*playPiano(261.6); // ド

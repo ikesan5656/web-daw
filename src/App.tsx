@@ -5,7 +5,6 @@ import SplitArea from "./components/SplitArea";
 import Sidebar from "./components/SIdebar";
 import DawEditor from "./components/DawEditor";
 import AudioEngineProvider from "./contexts/AudioEngineContext";
-import TrackDataStoreProvider from "./contexts/TrackDataStoreContext";
 
 export const MainContainer = styled(Box)({
   padding: "0",
@@ -21,12 +20,10 @@ export const MainContainer = styled(Box)({
 function App() {
   return (
     <MainContainer>
-      <TrackDataStoreProvider>
-        <AudioEngineProvider>
-          <AppHeader />
-          <SplitArea left={<Sidebar />} right={<DawEditor />} />
-        </AudioEngineProvider>
-      </TrackDataStoreProvider>
+      <AudioEngineProvider>
+        <AppHeader />
+        <SplitArea left={<Sidebar />} right={<DawEditor />} />
+      </AudioEngineProvider>
     </MainContainer>
   );
 }
