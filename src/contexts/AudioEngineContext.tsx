@@ -1,4 +1,13 @@
-import { createContext, useContext, useRef, useCallback, useMemo, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useRef,
+  useCallback,
+  useMemo,
+  type ReactNode,
+  useEffect,
+} from "react";
+//import { useTrackDataStore } from "./TrackDataStoreContext";
 
 // コンテキストの型定義
 type AudioContextType = {
@@ -6,6 +15,8 @@ type AudioContextType = {
   playPiano: (frequency: number) => void;
   initialize: () => Promise<void>;
   getAudioBufferFromFile: (file: File) => Promise<AudioBuffer>;
+  play: (buffer: AudioBuffer, when: number, offset: number, trackNode: GainNode) => void;
+  getContext: () => AudioContext | null;
   // その他必要な関数を追加
 };
 
@@ -21,10 +32,13 @@ const AudioContext = createContext<AudioContextType | null>(null);
 const AudioEngineProvider = ({ children }: { children: ReactNode }) => {
   // ポイント1: AudioContextの実体は useRef で持つ (Stateにしない)
   // これにより、AudioContextの中身が変わってもReactの再描画は発生しない
+  //const { addTrack } = useTrackDataStore();
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const masterGainRef = useRef<GainNode | null>(null);
 
   // AudioContextを取得、または生成するヘルパー関数
   const getContext = useCallback(() => {
+    // コンテキストが存在しない場合は新規作成
     if (!audioCtxRef.current) {
       // Next.jsなどのSSR対策でwindowチェックを入れるのが一般的
       if (typeof window !== "undefined") {
@@ -32,16 +46,51 @@ const AudioEngineProvider = ({ children }: { children: ReactNode }) => {
         audioCtxRef.current = new Ctx();
       }
     }
+
     return audioCtxRef.current;
   }, []);
 
-  // ポイント2: ユーザー操作でAudioContextをResume/Startさせる関数
   const initialize = useCallback(async () => {
     const ctx = getContext();
+
+    if (!ctx) return;
+
     if (ctx && ctx.state === "suspended") {
       await ctx.resume();
     }
+
+    // マスターノード作成、接続（初回のみ）
+    if (!masterGainRef.current) {
+      const masterGain = ctx.createGain();
+      masterGain.connect(ctx.destination);
+      masterGainRef.current = masterGain;
+    }
+
+    //const newTrackNode = ctx.createGain();
+    //addTrack(newTrackNode);
+
+    // TODO: デフォルトのトラック生成はプロバイダー内で行えないため、DawEditorのuseEffectで行う
   }, [getContext]);
+
+  const play = useCallback(
+    async (buffer: AudioBuffer, when: number, offset: number, trackNode: GainNode) => {
+      await initialize();
+      const ctx = getContext();
+      if (!ctx) return;
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      // トラックのノードに接続（使い捨てのため再生の度に接続し直す）
+      source.connect(trackNode);
+
+      // 再生終了時に参照を外すクリーンアップ
+      /*source.onended = () => {
+        source = null;
+      };*/
+
+      source.start(when, offset);
+    },
+    [initialize, getContext]
+  );
 
   // 音を鳴らす関数の例
   const playTone = useCallback(
@@ -110,6 +159,10 @@ const AudioEngineProvider = ({ children }: { children: ReactNode }) => {
     [getContext]
   );
 
+  useEffect(() => {
+    initialize();
+  }, [initialize]);
+
   // ポイント3: 公開する値を useMemo で固定する
   // 依存配列が空（または固定）なので、このオブジェクトの参照は永続的に変わらない
   const contextValue = useMemo(
@@ -118,8 +171,10 @@ const AudioEngineProvider = ({ children }: { children: ReactNode }) => {
       playTone,
       playPiano,
       getAudioBufferFromFile,
+      play,
+      getContext,
     }),
-    [initialize, playTone, playPiano, getAudioBufferFromFile]
+    [initialize, playTone, playPiano, getAudioBufferFromFile, play, getContext]
   );
 
   return <AudioContext.Provider value={contextValue}>{children}</AudioContext.Provider>;

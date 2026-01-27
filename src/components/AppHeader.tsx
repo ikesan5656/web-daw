@@ -1,5 +1,6 @@
 import { Box, styled } from "@mui/material";
 import { useTrackDataStore } from "../contexts/TrackDataStoreContext";
+import { useAudio } from "../contexts/AudioEngineContext";
 
 export const HeaderContainer = styled(Box)({
   padding: "0",
@@ -14,16 +15,20 @@ export const HeaderContainer = styled(Box)({
 });
 
 const AppHeader = () => {
-  const { addTrack, getTrackFromIndex } = useTrackDataStore();
+  const { getTrackFromIndex } = useTrackDataStore();
+  const { getContext } = useAudio();
   const testClick = () => {
     /*playPiano(261.6); // ド
     playPiano(329.6); // ミ
     playPiano(392.0); // ソ*/
-    addTrack();
+    const ctx = getContext();
+    if (!ctx) return;
+    /*const newTrackNode = ctx.createGain();
+    addTrack(newTrackNode);*/
   };
 
   const test2 = () => {
-    console.log(getTrackFromIndex(1));
+    console.log(getTrackFromIndex(0));
   };
 
   return (
