@@ -126,12 +126,20 @@ const TrackNote = memo(({ noteName, color, posX }: TrackNoteProps) => {
         style={
           new PIXI.TextStyle({
             fill: "white",
-            fontSize: 14,
+            fontSize: 9,
+            // 1. 折り返しを有効にする
+            wordWrap: true,
+            // 2. 幅を「Containerの幅(100) - 左右の余白」に設定する
+            wordWrapWidth: 80,
+            // 3. 行の高さを極端に小さくするか、高さを固定的に捉える
+            breakWords: true,
           })
         }
-        anchor={[0, 0.5]}
-        x={10}
-        y={TRACK_HEIGHT / 2}
+        anchor={[0, 0]}
+        x={3}
+        y={3}
+        // 4. 文字が縦にはみ出るのを防ぐために、高さを制限する（マスク代わり）
+        mask={null}
       />
     </Container>
   );
