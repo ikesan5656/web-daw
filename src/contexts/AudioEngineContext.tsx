@@ -6,7 +6,6 @@ import {
   useMemo,
   useState,
   type ReactNode,
-  useEffect,
 } from "react";
 //import { useTrackDataStore } from "./TrackDataStoreContext";
 
@@ -39,10 +38,11 @@ interface AudioNote {
 export interface AudioTrack {
   id: string;
   trackName: string;
+  trackNode: GainNode;
   notes: Map<string, AudioNote>;
 }
 
-const defaultNotes = new Map<string, AudioNote>([
+/*const defaultNotes = new Map<string, AudioNote>([
   [
     "defaultNode_1",
     {
@@ -70,7 +70,7 @@ const defaultTracks = new Map<string, AudioTrack>([
       notes: defaultNotes,
     },
   ],
-]);
+]);*/
 
 // webkitAudioContext定義追加
 declare global {
@@ -82,13 +82,62 @@ declare global {
 const AudioContext = createContext<AudioContextType | null>(null);
 
 const AudioEngineProvider = ({ children }: { children: ReactNode }) => {
-  const [tracks, setTracks] = useState<Map<string, AudioTrack>>(defaultTracks);
+  const [tracks, setTracks] = useState<Map<string, AudioTrack>>(() => {
+    //Contextを作成 (SSR対策でwindowチェック)
+    if (typeof window === "undefined") return new Map();
+
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    const ctx = new Ctx();
+
+    // 最初のトラック用の Node を作成（この辺りはプロジェクト選択機能で解決予定）
+    const initialId = crypto.randomUUID();
+    const gainNode = ctx.createGain();
+    gainNode.connect(ctx.destination);
+
+    // 初期Mapを生成して返す
+    return new Map([
+      [
+        initialId,
+        {
+          id: initialId,
+          trackName: "Track 1",
+          trackNode: gainNode, // 最初から Node が入る
+          notes: new Map(),
+        },
+      ],
+    ]);
+  });
+
+  // ポイント1: AudioContextの実体は useRef で持つ (Stateにしない)
+  // これにより、AudioContextの中身が変わってもReactの再描画は発生しない
+  //const { addTrack } = useTrackDataStore();
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const masterGainRef = useRef<GainNode | null>(null);
+
+  // AudioContextを取得、または生成するヘルパー関数
+  const getContext = useCallback(() => {
+    // コンテキストが存在しない場合は新規作成
+    if (!audioCtxRef.current) {
+      // Next.jsなどのSSR対策でwindowチェックを入れるのが一般的
+      if (typeof window !== "undefined") {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        audioCtxRef.current = new Ctx();
+      }
+    }
+
+    return audioCtxRef.current;
+  }, []);
+
   const addTrack = useCallback(() => {
+    if (!audioCtxRef.current) return;
+    const newTrackNode = audioCtxRef.current.createGain();
+    //newTrackNode.connect(masterGainRef.current);
     setTracks((prev) => {
       const newId = crypto.randomUUID();
       const newTrack: AudioTrack = {
         id: newId,
         trackName: `track_${prev.size + 1}`,
+        trackNode: newTrackNode,
         notes: new Map<string, AudioNote>(),
       };
       const newTracks = new Map(prev);
@@ -143,25 +192,6 @@ const AudioEngineProvider = ({ children }: { children: ReactNode }) => {
     },
     [tracks]
   );
-  // ポイント1: AudioContextの実体は useRef で持つ (Stateにしない)
-  // これにより、AudioContextの中身が変わってもReactの再描画は発生しない
-  //const { addTrack } = useTrackDataStore();
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const masterGainRef = useRef<GainNode | null>(null);
-
-  // AudioContextを取得、または生成するヘルパー関数
-  const getContext = useCallback(() => {
-    // コンテキストが存在しない場合は新規作成
-    if (!audioCtxRef.current) {
-      // Next.jsなどのSSR対策でwindowチェックを入れるのが一般的
-      if (typeof window !== "undefined") {
-        const Ctx = window.AudioContext || window.webkitAudioContext;
-        audioCtxRef.current = new Ctx();
-      }
-    }
-
-    return audioCtxRef.current;
-  }, []);
 
   const initialize = useCallback(async () => {
     const ctx = getContext();
@@ -178,9 +208,6 @@ const AudioEngineProvider = ({ children }: { children: ReactNode }) => {
       masterGain.connect(ctx.destination);
       masterGainRef.current = masterGain;
     }
-
-    //const newTrackNode = ctx.createGain();
-    //addTrack(newTrackNode);
 
     // TODO: デフォルトのトラック生成はプロバイダー内で行えないため、DawEditorのuseEffectで行う
   }, [getContext]);
@@ -272,9 +299,9 @@ const AudioEngineProvider = ({ children }: { children: ReactNode }) => {
     [getContext]
   );
 
-  useEffect(() => {
-    initialize();
-  }, [initialize]);
+  /*useEffect(async () => {
+    await initialize();
+  }, [initialize]);*/
 
   // ポイント3: 公開する値を useMemo で固定する
   // 依存配列が空（または固定）なので、このオブジェクトの参照は永続的に変わらない

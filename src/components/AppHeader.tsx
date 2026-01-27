@@ -10,24 +10,24 @@ export const HeaderContainer = styled(Box)({
   boxSizing: "border-box",
   display: "flex",
   flexFlow: "row",
-  backgroundColor: "grey",
+  backgroundColor: "cyan",
 });
 
 const AppHeader = () => {
-  const { getTrackFromIndex } = useAudio();
-  const { getContext } = useAudio();
+  const { getTracksInfo, initialize } = useAudio();
   const testClick = () => {
+    initialize();
     /*playPiano(261.6); // ド
     playPiano(329.6); // ミ
     playPiano(392.0); // ソ*/
-    const ctx = getContext();
-    if (!ctx) return;
+    //const ctx = getContext();
+    //if (!ctx) return;
     /*const newTrackNode = ctx.createGain();
     addTrack(newTrackNode);*/
   };
 
   const test2 = () => {
-    console.log(getTrackFromIndex(0));
+    console.log(getTracksInfo());
   };
 
   return (
