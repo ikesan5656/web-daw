@@ -1,8 +1,8 @@
-import "./App.css";
+import "@/App.css";
 import { Box, styled } from "@mui/material";
-import AppHeader from "./components/AppHeader";
-import AudioEngineProvider from "./contexts/AudioEngineContext";
-import AppRoutes from "./components/AppRoutes";
+import AppHeader from "@/components/AppHeader";
+import AudioEngineProvider from "@/contexts/AudioEngineContext";
+import AppRoutes from "@/components/AppRoutes";
 
 export const MainContainer = styled(Box)({
   padding: "0",

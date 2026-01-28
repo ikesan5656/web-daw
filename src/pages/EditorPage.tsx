@@ -1,6 +1,6 @@
-import DawEditor from "../components/DawEditor";
-import Sidebar from "../components/SIdebar";
-import SplitArea from "../components/SplitArea";
+import DawEditor from "@/components/DawEditor";
+import Sidebar from "@/components/Sidebar";
+import SplitArea from "@/components/SplitArea";
 
 const EditorPage = () => {
   return <SplitArea left={<Sidebar />} right={<DawEditor />} />;

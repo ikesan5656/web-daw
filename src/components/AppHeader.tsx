@@ -1,5 +1,5 @@
 import { Box, styled } from "@mui/material";
-import { useAudio } from "../contexts/AudioEngineContext";
+import { useAudio } from "@/contexts/AudioEngineContext";
 
 export const HeaderContainer = styled(Box)({
   padding: "0",

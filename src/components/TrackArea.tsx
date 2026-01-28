@@ -1,8 +1,8 @@
 import { Container, Graphics, Text } from "@pixi/react";
 import { Fragment, memo, useCallback, type ReactNode } from "react";
 import * as PIXI from "pixi.js";
-import { TRACK_HEADER_WIDTH } from "../util/trackSettings";
-import type { AudioTrack } from "../contexts/AudioEngineContext";
+import { TRACK_HEADER_WIDTH } from "@/util/trackSettings";
+import type { AudioTrack } from "@/contexts/AudioEngineContext";
 
 // ==========================================
 // 定数定義 (親コンポーネントでも計算に使うため export します)

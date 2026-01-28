@@ -1,5 +1,5 @@
 import { Box, styled } from "@mui/material";
-import ProjectSelectGridTable from "../components/ProjectSelectGridTable";
+import ProjectSelectGridTable from "@/components/ProjectSelectGridTable";
 
 const ProjectSelectHomePageContainer = styled(Box)({
   padding: 10,

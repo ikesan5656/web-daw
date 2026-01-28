@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import ProjectSelectHomePage from "../pages/ProjectSelectHomePage";
-import EditorPage from "../pages/EditorPage";
+import ProjectSelectHomePage from "@/pages/ProjectSelectHomePage";
+import EditorPage from "@/pages/EditorPage";
 
 const AppRoutes = () => {
   return (

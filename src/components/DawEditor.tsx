@@ -7,12 +7,12 @@ import TrackArea, {
   BORDER_HEIGHT,
   TRACK_AREA_OFFSET_Y,
   type DragPreviewState,
-} from "./TrackArea";
-import PlayHeader from "./PlayHeader";
-import DawRuler from "./DawRuler";
-import { useContainerSize } from "../hooks/useContainerSize";
-import { TRACK_HEADER_WIDTH } from "../util/trackSettings";
-import { useAudio } from "../contexts/AudioEngineContext";
+} from "@/components/TrackArea";
+import PlayHeader from "@/components/PlayHeader";
+import DawRuler from "@/components/DawRuler";
+import { useContainerSize } from "@/hooks/useContainerSize";
+import { TRACK_HEADER_WIDTH } from "@/util/trackSettings";
+import { useAudio } from "@/contexts/AudioEngineContext";
 
 // ... (スタイル定義 DawEditorContainer, TrackContainer はそのまま) ...
 const DawEditorContainer = styled(Box)({
