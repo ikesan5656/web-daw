@@ -1,10 +1,7 @@
+import { useAudio } from "@/contexts/AudioEngineContext";
+import { Project } from "@/types/project";
 import { Box, Button, Grid, Paper, Typography } from "@mui/material";
-
-interface Project {
-  id: number;
-  name: string;
-  imagePath: string;
-}
+import { useNavigate } from "react-router-dom";
 
 interface ProjectRow {
   project: Project;
@@ -13,6 +10,14 @@ interface ProjectRow {
 
 const ProjectRow = (props: ProjectRow) => {
   const { project, isHeader } = props;
+
+  const navigate = useNavigate();
+  const { initialize } = useAudio();
+
+  const onClick = (id: string) => {
+    initialize();
+    navigate(`/edit/${id}`);
+  };
 
   return (
     <Paper
@@ -32,7 +37,13 @@ const ProjectRow = (props: ProjectRow) => {
           <Typography variant={isHeader ? "subtitle2" : "body2"}>{project.name}</Typography>
         </Grid>
         <Grid size={6}>
-          <Button>クリック</Button>
+          <Button
+            onClick={() => {
+              onClick(project.id);
+            }}
+          >
+            クリック
+          </Button>
         </Grid>
       </Grid>
     </Paper>
@@ -40,8 +51,8 @@ const ProjectRow = (props: ProjectRow) => {
 };
 
 const projects: Project[] = [
-  { id: 1, name: "test1", imagePath: "/test" },
-  { id: 1, name: "test1", imagePath: "/test" },
+  { id: "1", name: "test1", imagePath: "/test" },
+  { id: "2", name: "test2", imagePath: "/test" },
 ];
 
 const ProjectSelectGridTable = () => {

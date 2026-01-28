@@ -2,7 +2,8 @@ import { Container, Graphics, Text } from "@pixi/react";
 import { Fragment, memo, useCallback, type ReactNode } from "react";
 import * as PIXI from "pixi.js";
 import { TRACK_HEADER_WIDTH } from "@/util/trackSettings";
-import type { AudioTrack } from "@/contexts/AudioEngineContext";
+//import type { AudioTrack } from "@/contexts/AudioEngineContext";
+import { AudioNote, AudioTrack } from "@/types/project";
 
 // ==========================================
 // 定数定義 (親コンポーネントでも計算に使うため export します)
@@ -191,16 +192,18 @@ const TrackList = memo(({ width, tracks }: TrackListProps) => {
             <TrackContainer posY={trackY} width={width}>
               <TrackHeader trackName={track.trackName} color={0x000000} />
               <Container position={[TRACK_HEADER_WIDTH, 0]}>
-                {Array.from(track.notes.values()).map((note) => {
-                  return (
-                    <TrackNote
-                      key={note.id}
-                      noteName={note.noteName}
-                      color={0xff0000}
-                      posX={note.posX}
-                    />
-                  );
-                })}
+                {Array.from((track.notes as Map<string, AudioNote>).values()).map(
+                  (note: AudioNote) => {
+                    return (
+                      <TrackNote
+                        key={note.id}
+                        noteName={note.noteName}
+                        color={0xff0000}
+                        posX={note.posX}
+                      />
+                    );
+                  }
+                )}
               </Container>
             </TrackContainer>
 

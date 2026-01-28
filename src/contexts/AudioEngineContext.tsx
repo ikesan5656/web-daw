@@ -1,3 +1,4 @@
+import { AudioNote, AudioTrack } from "@/types/project";
 import {
   createContext,
   useContext,
@@ -27,19 +28,6 @@ export interface AudioContextType {
   ) => Map<string, AudioTrack>;
   getTracksInfo: () => Map<string, AudioTrack>;
   getTrackFromIndex: (index: number) => AudioTrack;
-}
-interface AudioNote {
-  id: string;
-  noteName: string;
-  posX: number;
-  audioBuffer?: AudioBuffer;
-}
-
-export interface AudioTrack {
-  id: string;
-  trackName: string;
-  trackNode: GainNode;
-  notes: Map<string, AudioNote>;
 }
 
 /*const defaultNotes = new Map<string, AudioNote>([
@@ -82,7 +70,7 @@ declare global {
 const AudioContext = createContext<AudioContextType | null>(null);
 
 const AudioEngineProvider = ({ children }: { children: ReactNode }) => {
-  const [tracks, setTracks] = useState<Map<string, AudioTrack>>(() => {
+  /*const [tracks, setTracks] = useState<Map<string, AudioTrack>>(() => {
     //Contextを作成 (SSR対策でwindowチェック)
     if (typeof window === "undefined") return new Map();
 
@@ -106,7 +94,8 @@ const AudioEngineProvider = ({ children }: { children: ReactNode }) => {
         },
       ],
     ]);
-  });
+  });*/
+  const [tracks, setTracks] = useState<Map<string, AudioTrack>>(new Map());
 
   // ポイント1: AudioContextの実体は useRef で持つ (Stateにしない)
   // これにより、AudioContextの中身が変わってもReactの再描画は発生しない
@@ -208,7 +197,9 @@ const AudioEngineProvider = ({ children }: { children: ReactNode }) => {
       masterGain.connect(ctx.destination);
       masterGainRef.current = masterGain;
     }
-  }, [getContext]);
+
+    addTrack();
+  }, [getContext, addTrack]);
 
   const play = useCallback(
     async (buffer: AudioBuffer, when: number, offset: number, trackNode: GainNode) => {
