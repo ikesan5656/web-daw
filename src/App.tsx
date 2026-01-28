@@ -1,10 +1,8 @@
 import "./App.css";
 import { Box, styled } from "@mui/material";
 import AppHeader from "./components/AppHeader";
-import SplitArea from "./components/SplitArea";
-import Sidebar from "./components/SIdebar";
-import DawEditor from "./components/DawEditor";
 import AudioEngineProvider from "./contexts/AudioEngineContext";
+import AppRoutes from "./components/AppRoutes";
 
 export const MainContainer = styled(Box)({
   padding: "0",
@@ -22,7 +20,7 @@ function App() {
     <MainContainer>
       <AudioEngineProvider>
         <AppHeader />
-        <SplitArea left={<Sidebar />} right={<DawEditor />} />
+        <AppRoutes />
       </AudioEngineProvider>
     </MainContainer>
   );

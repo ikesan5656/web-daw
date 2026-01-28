@@ -208,8 +208,6 @@ const AudioEngineProvider = ({ children }: { children: ReactNode }) => {
       masterGain.connect(ctx.destination);
       masterGainRef.current = masterGain;
     }
-
-    // TODO: デフォルトのトラック生成はプロバイダー内で行えないため、DawEditorのuseEffectで行う
   }, [getContext]);
 
   const play = useCallback(
