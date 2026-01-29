@@ -1,1 +1,2 @@
 export const TRACK_HEADER_WIDTH = 100;
+export const CONTAINER_WIDTH = 1000000;

@@ -1,4 +1,5 @@
 import { PIXELS_PER_BEAT } from "@/util/projectSettings";
+import { CONTAINER_WIDTH } from "@/util/trackSettings";
 import { Container, Graphics } from "@pixi/react";
 import * as PIXI from "pixi.js";
 import { memo, useCallback } from "react";
@@ -6,9 +7,10 @@ import { memo, useCallback } from "react";
 interface DawRulerProps {
   width: number;
   height: number;
+  scrollX: number;
 }
 
-const DawRuler = memo(({ width, height }: DawRulerProps) => {
+const DawRuler = memo(({ width, height, scrollX }: DawRulerProps) => {
   // 左側のヘッダー幅 (TrackAreaの仕様に合わせる)
   const HEADER_WIDTH = 100;
 
@@ -44,7 +46,7 @@ const DawRuler = memo(({ width, height }: DawRulerProps) => {
 
   return (
     // positionを [0, 0] にして、画面左上から全体を覆うように配置
-    <Container position={[0, 0]}>
+    <Container position={[-scrollX, 0]} scale={{ x: 1, y: 1 }} width={CONTAINER_WIDTH}>
       <Graphics draw={draw} />
 
       {/* 必要なら文字などを追加 

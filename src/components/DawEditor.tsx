@@ -11,9 +11,10 @@ import TrackArea, {
 import PlayHeader from "@/components/PlayHeader";
 import DawRuler from "@/components/DawRuler";
 import { useContainerSize } from "@/hooks/useContainerSize";
-import { TRACK_HEADER_WIDTH } from "@/util/trackSettings";
+import { CONTAINER_WIDTH, TRACK_HEADER_WIDTH } from "@/util/trackSettings";
 import { useAudio } from "@/contexts/AudioEngineContext";
 import { convertPositionToStartTime } from "@/util/projectSettings";
+import { VirtualHorizontalScrollbar } from "./VirtualHorizontalScrollbar";
 
 // ... (スタイル定義 DawEditorContainer, TrackContainer はそのまま) ...
 const DawEditorContainer = styled(Box)({
@@ -46,6 +47,7 @@ const DawEditor = () => {
   const tracks = getTracksInfo();
 
   const { ref: containerRef, size } = useContainerSize();
+  console.log(size);
   const trackAreaPixiRef = useRef<PIXI.Container>(null);
   const [scrollTop, setScrollTop] = useState(0);
   // ★ドラッグプレビュー用のState
@@ -54,6 +56,10 @@ const DawEditor = () => {
     x: 0,
     trackIndex: 0,
   });
+
+  const [scrollX, setScrollX] = useState(0);
+
+  //console.log(scrollX);
 
   const unitHeight = TRACK_HEIGHT + BORDER_HEIGHT;
   const contentHeight = TRACK_AREA_OFFSET_Y + tracks.size * unitHeight + 200;
@@ -214,19 +220,25 @@ const DawEditor = () => {
             >
               {/* 描画順序: TrackAreaを先に書く (奥) */}
               <TrackArea
-                width={size.width}
                 tracks={tracks}
                 pixiRef={trackAreaPixiRef}
                 scrollTop={scrollTop}
+                scrollX={scrollX}
                 dragPreview={dragPreview}
               />
 
               {/* 描画順序: Rulerを後に書く (手前・最前面) */}
-              <DawRuler width={size.width} height={TRACK_AREA_OFFSET_Y} />
+              <DawRuler width={CONTAINER_WIDTH} height={TRACK_AREA_OFFSET_Y} scrollX={scrollX} />
             </Stage>
           </div>
         </div>
       </TrackContainer>
+      <VirtualHorizontalScrollbar
+        viewportWidth={size.width}
+        contentWidth={CONTAINER_WIDTH}
+        scrollX={scrollX}
+        onScrollXChange={setScrollX}
+      />
     </DawEditorContainer>
   );
 };

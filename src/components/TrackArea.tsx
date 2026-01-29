@@ -21,9 +21,9 @@ const COLOR_BG = 0xd3d3d3; // トラック背景色
 // 型定義
 // ==========================================
 interface TrackAreaProps {
-  width: number;
   tracks: Map<string, AudioTrack>;
   scrollTop: number; // ★追加: 親からのスクロール量
+  scrollX: number;
   pixiRef: React.Ref<PIXI.Container>; // ★追加: 座標変換(toLocal)用
   dragPreview: DragPreviewState;
 }
@@ -249,7 +249,7 @@ const GhostNote = memo(({ x, trackIndex }: { x: number; trackIndex: number }) =>
 // 4. メインコンポーネント
 // Stageは親にあるので、ここは Container を返すだけにする
 // ==========================================
-const TrackArea = memo(({ width, tracks, scrollTop, pixiRef, dragPreview }: TrackAreaProps) => {
+const TrackArea = memo(({ tracks, scrollTop, scrollX, pixiRef, dragPreview }: TrackAreaProps) => {
   // スクロール位置の計算
   // 開始位置(80px) - 現在のスクロール量
   const currentY = TRACK_AREA_OFFSET_Y - scrollTop;
@@ -260,7 +260,7 @@ const TrackArea = memo(({ width, tracks, scrollTop, pixiRef, dragPreview }: Trac
   return (
     <Container
       ref={pixiRef} // ★親が toLocal するためのRef
-      position={[-999200, currentY]} // ★スクロール反映
+      position={[-scrollX, currentY]} // ★スクロール反映
       eventMode="static" // 内部でのクリック等が必要になった場合のため
       width={CONTAINER_WIDTH}
       scale={{ x: 1, y: 1 }} // Scale horizontally to match the new width
