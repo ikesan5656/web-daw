@@ -4,7 +4,7 @@ import * as PIXI from "pixi.js";
 import { TRACK_HEADER_WIDTH } from "@/util/trackSettings";
 //import type { AudioTrack } from "@/contexts/AudioEngineContext";
 import { AudioNote, AudioTrack } from "@/types/project";
-import { convertDurationToPixel } from "@/util/projectSettings";
+import { convertDurationToPixel, convertStartTimeToPosition } from "@/util/projectSettings";
 
 // ==========================================
 // 定数定義 (親コンポーネントでも計算に使うため export します)
@@ -202,7 +202,7 @@ const TrackList = memo(({ width, tracks }: TrackListProps) => {
                         key={note.id}
                         noteName={note.noteName}
                         color={0xff0000}
-                        posX={note.posX}
+                        posX={convertStartTimeToPosition(note.when)}
                         duration={note.audioBuffer?.duration ?? 0}
                       />
                     );

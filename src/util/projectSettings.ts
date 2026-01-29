@@ -45,3 +45,33 @@ export const convertPixelToDuration = (pixel: number): number => {
   const duration = beat * SECONDS_PER_BEAT;
   return duration;
 };
+
+/**
+ * タイムライン上のX座標から再生開始時刻(秒)を計算する
+ * @param posX タイムライン左端からのピクセル距離
+ * @returns 音楽上の再生開始時間（秒）
+ */
+export const convertPositionToStartTime = (posX: number): number => {
+  // 1. ピクセルを拍数に変換 (例: 200px / 100pxPerBeat = 2拍目)
+  const beats = posX / PIXELS_PER_BEAT;
+
+  // 2. 拍数を秒数に変換 (例: 2拍 * 0.5s = 1.0秒)
+  const startTimeInSeconds = beats * SECONDS_PER_BEAT;
+
+  return startTimeInSeconds;
+};
+
+/**
+ * 再生開始時刻(秒)からタイムライン上のX座標を計算する
+ * @param startTimeInSeconds 音楽上の時間（秒）
+ * @returns タイムライン左端からのピクセル距離
+ */
+export const convertStartTimeToPosition = (startTimeInSeconds: number): number => {
+  // 1. 秒数を拍数に変換
+  const beats = startTimeInSeconds / SECONDS_PER_BEAT;
+
+  // 2. 拍数をピクセルに変換
+  const posX = beats * PIXELS_PER_BEAT;
+
+  return posX;
+};

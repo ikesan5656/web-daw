@@ -13,6 +13,7 @@ import DawRuler from "@/components/DawRuler";
 import { useContainerSize } from "@/hooks/useContainerSize";
 import { TRACK_HEADER_WIDTH } from "@/util/trackSettings";
 import { useAudio } from "@/contexts/AudioEngineContext";
+import { convertPositionToStartTime } from "@/util/projectSettings";
 
 // ... (スタイル定義 DawEditorContainer, TrackContainer はそのまま) ...
 const DawEditorContainer = styled(Box)({
@@ -155,8 +156,10 @@ const DawEditor = () => {
       try {
         const audioBuffer = await getAudioBufferFromFile(file);
 
-        console.log(audioBuffer.duration);
-        addNote(currentTrack.id, droppedX, file.name, audioBuffer);
+        //console.log(audioBuffer.duration);
+        console.log("配置座標", droppedX);
+        console.log(convertPositionToStartTime(droppedX));
+        addNote(currentTrack.id, convertPositionToStartTime(droppedX), file.name, audioBuffer);
       } catch (err) {
         alert(err);
       } finally {

@@ -39,7 +39,8 @@ const AppHeader = () => {
 
       if (firstNote) {
         console.log("最初のノートを見つけました:", firstNote);
-        if (firstNote.audioBuffer) playNote(firstNote.audioBuffer, 5, 0, firstTrack.trackNode);
+        if (firstNote.audioBuffer)
+          playNote(firstNote.audioBuffer, firstNote.when, 0, firstTrack.trackNode);
       } else {
         console.log("トラックはありますが、ノートが登録されていません。");
       }

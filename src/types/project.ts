@@ -11,7 +11,7 @@ export interface Project {
 export interface AudioNote {
   id: string;
   noteName: string;
-  posX: number;
+  when: number;
   audioBuffer?: AudioBuffer;
 }
 

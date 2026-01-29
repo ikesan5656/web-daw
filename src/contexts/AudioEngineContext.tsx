@@ -23,7 +23,7 @@ export interface AudioContextType {
   deleteTrack: (id: string) => void;
   addNote: (
     trackId: string,
-    posX: number,
+    when: number,
     noteName: string,
     audioBuffer: AudioBuffer
   ) => Map<string, AudioTrack>;
@@ -147,7 +147,7 @@ const AudioEngineProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const addNote = useCallback(
-    (trackId: string, posX: number, noteName: string, audioBuffer: AudioBuffer) => {
+    (trackId: string, when: number, noteName: string, audioBuffer: AudioBuffer) => {
       setTracks((prev) => {
         const targetTrack = prev.get(trackId);
         if (!targetTrack) {
@@ -157,7 +157,7 @@ const AudioEngineProvider = ({ children }: { children: ReactNode }) => {
         const newNote: AudioNote = {
           id: newNoteId,
           noteName: noteName,
-          posX: posX,
+          when: when,
           audioBuffer: audioBuffer,
         };
         const newTracks = new Map(prev);
