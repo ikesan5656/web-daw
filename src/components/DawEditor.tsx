@@ -154,7 +154,8 @@ const DawEditor = () => {
       // AudioBuffer変換
       try {
         const audioBuffer = await getAudioBufferFromFile(file);
-        console.log(audioBuffer);
+
+        console.log(audioBuffer.duration);
         addNote(currentTrack.id, droppedX, file.name, audioBuffer);
       } catch (err) {
         alert(err);

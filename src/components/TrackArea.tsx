@@ -4,6 +4,7 @@ import * as PIXI from "pixi.js";
 import { TRACK_HEADER_WIDTH } from "@/util/trackSettings";
 //import type { AudioTrack } from "@/contexts/AudioEngineContext";
 import { AudioNote, AudioTrack } from "@/types/project";
+import { convertDurationToPixel } from "@/util/projectSettings";
 
 // ==========================================
 // 定数定義 (親コンポーネントでも計算に使うため export します)
@@ -47,6 +48,7 @@ interface TrackNoteProps {
   noteName: string;
   color: number;
   posX: number;
+  duration: number;
 }
 
 interface TrackListProps {
@@ -108,15 +110,16 @@ const TrackContainer = memo(({ posY, width, children }: TrackContainerProps) => 
 // ==========================================
 // 3. トラックコンテンツ (中身)
 // ==========================================
-const TrackNote = memo(({ noteName, color, posX }: TrackNoteProps) => {
+const TrackNote = memo(({ noteName, color, posX, duration }: TrackNoteProps) => {
+  const width = convertDurationToPixel(duration);
   const drawRect = useCallback(
     (g: PIXI.Graphics) => {
       g.clear();
       g.beginFill(color);
-      g.drawRect(0, 0, 100, TRACK_HEIGHT);
+      g.drawRect(0, 0, width, TRACK_HEIGHT);
       g.endFill();
     },
-    [color]
+    [color, width]
   );
 
   return (
@@ -127,11 +130,11 @@ const TrackNote = memo(({ noteName, color, posX }: TrackNoteProps) => {
         style={
           new PIXI.TextStyle({
             fill: "white",
-            fontSize: 9,
+            fontSize: 11,
             // 1. 折り返しを有効にする
             wordWrap: true,
             // 2. 幅を「Containerの幅(100) - 左右の余白」に設定する
-            wordWrapWidth: 80,
+            wordWrapWidth: width - 10,
             // 3. 行の高さを極端に小さくするか、高さを固定的に捉える
             breakWords: true,
           })
@@ -200,6 +203,7 @@ const TrackList = memo(({ width, tracks }: TrackListProps) => {
                         noteName={note.noteName}
                         color={0xff0000}
                         posX={note.posX}
+                        duration={note.audioBuffer?.duration ?? 0}
                       />
                     );
                   }

@@ -1,3 +1,4 @@
+import { PIXELS_PER_BEAT } from "@/util/projectSettings";
 import { Container, Graphics } from "@pixi/react";
 import * as PIXI from "pixi.js";
 import { memo, useCallback } from "react";
@@ -33,7 +34,7 @@ const DawRuler = memo(({ width, height }: DawRulerProps) => {
       const startX = HEADER_WIDTH;
 
       // 例えば 100px 間隔で描画
-      for (let x = startX; x < width; x += 100) {
+      for (let x = startX; x < width; x += PIXELS_PER_BEAT) {
         g.moveTo(x, height);
         g.lineTo(x, height - 20); // 少し長い線
       }
