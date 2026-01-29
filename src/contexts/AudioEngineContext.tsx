@@ -7,6 +7,7 @@ import {
   useMemo,
   useState,
   type ReactNode,
+  useEffect,
 } from "react";
 //import { useTrackDataStore } from "./TrackDataStoreContext";
 
@@ -16,7 +17,7 @@ export interface AudioContextType {
   playPiano: (frequency: number) => void;
   initialize: () => Promise<void>;
   getAudioBufferFromFile: (file: File) => Promise<AudioBuffer>;
-  play: (buffer: AudioBuffer, when: number, offset: number, trackNode: GainNode) => void;
+  playNote: (buffer: AudioBuffer, when: number, offset: number, trackNode: GainNode) => void;
   getContext: () => AudioContext | null;
   addTrack: () => void;
   deleteTrack: (id: string) => void;
@@ -28,6 +29,7 @@ export interface AudioContextType {
   ) => Map<string, AudioTrack>;
   getTracksInfo: () => Map<string, AudioTrack>;
   getTrackFromIndex: (index: number) => AudioTrack;
+  getNoteById: (trackId: string, noteId: string) => AudioNote | null;
 }
 
 /*const defaultNotes = new Map<string, AudioNote>([
@@ -120,7 +122,8 @@ const AudioEngineProvider = ({ children }: { children: ReactNode }) => {
   const addTrack = useCallback(() => {
     if (!audioCtxRef.current) return;
     const newTrackNode = audioCtxRef.current.createGain();
-    //newTrackNode.connect(masterGainRef.current);
+    // マスターゲインに接続
+    if (masterGainRef.current) newTrackNode.connect(masterGainRef.current);
     setTracks((prev) => {
       const newId = crypto.randomUUID();
       const newTrack: AudioTrack = {
@@ -184,28 +187,33 @@ const AudioEngineProvider = ({ children }: { children: ReactNode }) => {
 
   const initialize = useCallback(async () => {
     const ctx = getContext();
-
     if (!ctx) return;
 
-    if (ctx && ctx.state === "suspended") {
+    /*if (ctx && ctx.state === "suspended") {
+      console.log("resume");
       await ctx.resume();
-    }
+    }*/
 
+    console.log(masterGainRef.current);
     // マスターノード作成、接続（初回のみ）
     if (!masterGainRef.current) {
       const masterGain = ctx.createGain();
       masterGain.connect(ctx.destination);
       masterGainRef.current = masterGain;
+      console.log("addInitTrack");
+      addTrack();
     }
-
-    addTrack();
   }, [getContext, addTrack]);
 
-  const play = useCallback(
+  const playNote = useCallback(
     async (buffer: AudioBuffer, when: number, offset: number, trackNode: GainNode) => {
       await initialize();
       const ctx = getContext();
       if (!ctx) return;
+
+      if (ctx.state === "suspended") {
+        await ctx.resume();
+      }
       const source = ctx.createBufferSource();
       source.buffer = buffer;
       // トラックのノードに接続（使い捨てのため再生の度に接続し直す）
@@ -216,7 +224,7 @@ const AudioEngineProvider = ({ children }: { children: ReactNode }) => {
         source = null;
       };*/
 
-      source.start(when, offset);
+      source.start(ctx.currentTime + when, offset);
     },
     [initialize, getContext]
   );
@@ -288,9 +296,35 @@ const AudioEngineProvider = ({ children }: { children: ReactNode }) => {
     [getContext]
   );
 
-  /*useEffect(async () => {
-    await initialize();
-  }, [initialize]);*/
+  const getNoteById = useCallback(
+    (trackId: string, noteId: string): AudioNote | null => {
+      // 1. 指定されたトラックを取得
+      const targetTrack = tracks.get(trackId);
+
+      if (!targetTrack) {
+        console.warn(`Track with ID ${trackId} not found.`);
+        return null;
+      }
+
+      // 2. トラック内の notes Map から指定されたノートを取得
+      const targetNote = targetTrack.notes.get(noteId);
+
+      if (!targetNote) {
+        console.warn(`Note with ID ${noteId} not found in track ${trackId}.`);
+        return null;
+      }
+
+      return targetNote;
+    },
+    [tracks]
+  );
+
+  useEffect(() => {
+    const initializeAudio = async () => {
+      await initialize();
+    };
+    initializeAudio();
+  }, [initialize]);
 
   // ポイント3: 公開する値を useMemo で固定する
   // 依存配列が空（または固定）なので、このオブジェクトの参照は永続的に変わらない
@@ -300,26 +334,28 @@ const AudioEngineProvider = ({ children }: { children: ReactNode }) => {
       playTone,
       playPiano,
       getAudioBufferFromFile,
-      play,
+      playNote,
       getContext,
       addTrack,
       deleteTrack,
       addNote,
       getTracksInfo,
       getTrackFromIndex,
+      getNoteById,
     }),
     [
       initialize,
       playTone,
       playPiano,
       getAudioBufferFromFile,
-      play,
+      playNote,
       getContext,
       addTrack,
       deleteTrack,
       addNote,
       getTracksInfo,
       getTrackFromIndex,
+      getNoteById,
     ]
   );
 

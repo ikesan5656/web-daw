@@ -14,9 +14,9 @@ export const HeaderContainer = styled(Box)({
 });
 
 const AppHeader = () => {
-  const { getTracksInfo, initialize } = useAudio();
+  const { addTrack, playNote, getTracksInfo } = useAudio();
   const testClick = () => {
-    initialize();
+    //initialize();
     /*playPiano(261.6); // ド
     playPiano(329.6); // ミ
     playPiano(392.0); // ソ*/
@@ -24,10 +24,30 @@ const AppHeader = () => {
     //if (!ctx) return;
     /*const newTrackNode = ctx.createGain();
     addTrack(newTrackNode);*/
+    addTrack();
   };
 
   const test2 = () => {
-    console.log(getTracksInfo());
+    //console.log(getTracksInfo());
+    const tracks = getTracksInfo();
+    // 1. 最初のトラックを取り出す
+    const firstTrack = tracks.values().next().value;
+
+    if (firstTrack) {
+      // 2. そのトラックの中の最初のノートを取り出す
+      const firstNote = firstTrack.notes.values().next().value;
+
+      if (firstNote) {
+        console.log("最初のノートを見つけました:", firstNote);
+        if (firstNote.audioBuffer) playNote(firstNote.audioBuffer, 5, 0, firstTrack.trackNode);
+      } else {
+        console.log("トラックはありますが、ノートが登録されていません。");
+      }
+    } else {
+      console.log("トラックが一つもありません。");
+    }
+    //const targetNote = tracks.
+    //playNote()
   };
 
   return (
