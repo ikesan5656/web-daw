@@ -12,6 +12,7 @@ import { convertDurationToPixel, convertStartTimeToPosition } from "@/util/proje
 export const TRACK_HEIGHT = 50; // トラックの高さ
 export const BORDER_HEIGHT = 3; // 線の太さ（高さ）
 export const TRACK_AREA_OFFSET_Y = 80; // 上部の余白（ルーラーの高さなど）
+const CONTAINER_WIDTH = 1000000;
 
 const COLOR_BORDER = 0xffffff; // 線の色
 const COLOR_BG = 0xd3d3d3; // トラック背景色
@@ -169,7 +170,7 @@ const TrackHeader = memo(({ trackName, color }: TrackHeaderProps) => {
         style={
           new PIXI.TextStyle({
             fill: "white",
-            fontSize: 14,
+            fontSize: 11,
           })
         }
         anchor={[0, 0.5]}
@@ -259,14 +260,17 @@ const TrackArea = memo(({ width, tracks, scrollTop, pixiRef, dragPreview }: Trac
   return (
     <Container
       ref={pixiRef} // ★親が toLocal するためのRef
-      position={[0, currentY]} // ★スクロール反映
+      position={[-999200, currentY]} // ★スクロール反映
       eventMode="static" // 内部でのクリック等が必要になった場合のため
+      width={CONTAINER_WIDTH}
+      scale={{ x: 1, y: 1 }} // Scale horizontally to match the new width
+      //resolution={window.devicePixelRatio} // Adjust resolution for better text rendering
     >
       {/* 1. 最上部のセパレーター */}
-      <TrackSeparator posY={Y_TOP_LINE} width={width} />
+      <TrackSeparator posY={Y_TOP_LINE} width={CONTAINER_WIDTH} />
 
       {/* 2. トラックリスト */}
-      <TrackList width={width} tracks={tracks} />
+      <TrackList width={CONTAINER_WIDTH} tracks={tracks} />
 
       {/* ★ ドラッグ中のみゴーストを表示 */}
       {dragPreview.isVisible && <GhostNote x={dragPreview.x} trackIndex={dragPreview.trackIndex} />}
