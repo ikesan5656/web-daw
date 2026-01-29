@@ -23,7 +23,7 @@ const SplitArea = (props: SplitArea) => {
 
   return (
     <SplitPane direction="horizontal" /*divider={}*/>
-      <Pane minSize="200px" defaultSize={"300px"}>
+      <Pane maxSize="50%" minSize="200px" defaultSize={"300px"}>
         {left}
       </Pane>
       <Pane minSize="50%" defaultSize={"100%"}>
