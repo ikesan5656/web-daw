@@ -1,34 +1,21 @@
-import { SplitPane, Pane /*, type DividerProps*/ } from "react-split-pane";
-//import { GripVertical } from "lucide-react"; // アイコンライブラリ
+import { SplitPane, Pane } from "react-split-pane";
 import type { ReactNode } from "react";
 
-// カスタムDivider: アイコンなど dividerClassName では不可能な表現
-/*const CustomDivider = ({ isDragging, ...domProps }: DividerProps) => (
-  <div
-    {...domProps}
-    className={`w-3 h-full cursor-col-resize flex items-center justify-center
-      ${isDragging ? "bg-blue-400" : "bg-gray-100 hover:bg-gray-200"}`}
-  >
-    <GripVertical size={12} className={isDragging ? "text-white" : "text-gray-400"} />
-  </div>
-);*/
-
-interface SplitArea {
+interface SplitAreaProps {
   left: ReactNode;
   right: ReactNode;
 }
 
-const SplitArea = (props: SplitArea) => {
-  const { left, right } = props;
-
+const SplitArea = ({ left, right }: SplitAreaProps) => {
   return (
-    <SplitPane direction="horizontal" /*divider={}*/>
-      <Pane maxSize="50%" minSize="200px" defaultSize={"300px"}>
+    <SplitPane direction="horizontal">
+      {/* 左パネル: 固定幅ベースで制限をかける */}
+      <Pane maxSize="50%" minSize="200px" defaultSize="300px">
         {left}
       </Pane>
-      <Pane minSize="50%" defaultSize={"100%"}>
-        {right || <div>Loading...</div>}
-      </Pane>
+
+      {/* 右パネル: defaultSizeを指定せず、残りの空間を自動で埋めさせる */}
+      <Pane minSize="50%">{right || <div>Loading...</div>}</Pane>
     </SplitPane>
   );
 };

@@ -1,5 +1,5 @@
 import { styled } from "@mui/material/styles";
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 
 /* =========================
  * props
@@ -80,7 +80,10 @@ export const VirtualHorizontalScrollbar = ({
 
   const scrollXToThumbX = (x: number) => (maxScrollX === 0 ? 0 : (x / maxScrollX) * maxThumbX);
 
-  const thumbXToScrollX = (x: number) => (maxThumbX === 0 ? 0 : (x / maxThumbX) * maxScrollX);
+  const thumbXToScrollX = useCallback(
+    (x: number) => (maxThumbX === 0 ? 0 : (x / maxThumbX) * maxScrollX),
+    [maxThumbX, maxScrollX]
+  );
 
   /* =========================
    * drag handlers (useRef)

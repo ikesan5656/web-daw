@@ -47,7 +47,6 @@ const DawEditor = () => {
   const tracks = getTracksInfo();
 
   const { ref: containerRef, size } = useContainerSize();
-  console.log(size);
   const trackAreaPixiRef = useRef<PIXI.Container>(null);
   const [scrollTop, setScrollTop] = useState(0);
   // ★ドラッグプレビュー用のState
@@ -58,8 +57,6 @@ const DawEditor = () => {
   });
 
   const [scrollX, setScrollX] = useState(0);
-
-  //console.log(scrollX);
 
   const unitHeight = TRACK_HEIGHT + BORDER_HEIGHT;
   const contentHeight = TRACK_AREA_OFFSET_Y + tracks.size * unitHeight + 200;
@@ -161,10 +158,6 @@ const DawEditor = () => {
       // AudioBuffer変換
       try {
         const audioBuffer = await getAudioBufferFromFile(file);
-
-        //console.log(audioBuffer.duration);
-        console.log("配置座標", droppedX);
-        console.log(convertPositionToStartTime(droppedX));
         addNote(currentTrack.id, convertPositionToStartTime(droppedX), file.name, audioBuffer);
       } catch (err) {
         alert(err);
@@ -233,12 +226,14 @@ const DawEditor = () => {
           </div>
         </div>
       </TrackContainer>
-      <VirtualHorizontalScrollbar
-        viewportWidth={size.width}
-        contentWidth={CONTAINER_WIDTH}
-        scrollX={scrollX}
-        onScrollXChange={setScrollX}
-      />
+      {size.width > 0 && (
+        <VirtualHorizontalScrollbar
+          viewportWidth={size.width}
+          contentWidth={CONTAINER_WIDTH}
+          scrollX={scrollX}
+          onScrollXChange={setScrollX}
+        />
+      )}
     </DawEditorContainer>
   );
 };
