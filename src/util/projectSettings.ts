@@ -4,6 +4,8 @@ export const DEFAULT_BPM = 120;
 export const SECONDS_PER_BEAT = 60 / DEFAULT_BPM;
 // 1拍あたりのピクセル数
 export const PIXELS_PER_BEAT = 50;
+// 1小節あたりのピクセル数
+export const PIXELS_PER_BAR = PIXELS_PER_BEAT * 4;
 
 /**
  * 拍数から秒数へ変換

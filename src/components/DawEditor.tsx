@@ -226,6 +226,8 @@ const DawEditor = () => {
           </div>
         </div>
       </TrackContainer>
+
+      {/* 水平方向スクロールバー */}
       {size.width > 0 && (
         <VirtualHorizontalScrollbar
           viewportWidth={size.width}
