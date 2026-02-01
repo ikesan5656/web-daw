@@ -2,19 +2,21 @@ import { Box, styled } from "@mui/material";
 import { Stage } from "@pixi/react";
 import * as PIXI from "pixi.js";
 import { useCallback, useRef, useState } from "react";
-import TrackArea, {
-  TRACK_HEIGHT,
-  BORDER_HEIGHT,
-  TRACK_AREA_OFFSET_Y,
-  type DragPreviewState,
-} from "@/components/TrackArea";
+import TrackArea, { type DragPreviewState } from "@/components/TrackArea";
 import PlayHeader from "@/components/PlayHeader";
 import DawRuler from "@/components/DawRuler";
 import { useContainerSize } from "@/hooks/useContainerSize";
-import { CONTAINER_WIDTH, TRACK_HEADER_WIDTH } from "@/util/trackSettings";
+import {
+  TRACK_AREA_OFFSET_Y,
+  TRACK_BORDER_HEIGHT,
+  TRACK_CONTAINER_WIDTH,
+  TRACK_HEADER_WIDTH,
+  TRACK_HEIGHT,
+} from "@/util/trackSettings";
 import { useAudio } from "@/contexts/AudioEngineContext";
 import { convertPositionToStartTime } from "@/util/projectSettings";
 import { VirtualHorizontalScrollbar } from "./VirtualHorizontalScrollbar";
+import TrackHeaderArea from "./TrackHeaderArea";
 
 // ... (スタイル定義 DawEditorContainer, TrackContainer はそのまま) ...
 const DawEditorContainer = styled(Box)({
@@ -58,7 +60,7 @@ const DawEditor = () => {
 
   const [scrollX, setScrollX] = useState(0);
 
-  const unitHeight = TRACK_HEIGHT + BORDER_HEIGHT;
+  const unitHeight = TRACK_HEIGHT + TRACK_BORDER_HEIGHT;
   const contentHeight = TRACK_AREA_OFFSET_Y + tracks.size * unitHeight + 200;
 
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
@@ -92,6 +94,8 @@ const DawEditor = () => {
       // もし TrackArea に width/height プロパティを設定しているならそれを使います
       const areaWidth = trackAreaPixiRef.current.width;
       const areaHeight = tracks.size * unitHeight; // トラック全体の高さ
+
+      console.log(localPoint.y);
 
       const isOutside =
         localPoint.x < TRACK_HEADER_WIDTH ||
@@ -203,6 +207,8 @@ const DawEditor = () => {
               top: 0,
               height: size.height, // ★ここを修正 (100% -> size.height)
               overflow: "hidden",
+              display: "flex",
+              flexFlow: "row",
             }}
           >
             <Stage
@@ -211,6 +217,12 @@ const DawEditor = () => {
               options={{ backgroundColor: 0x1e1e1e, antialias: true }}
               style={{ display: "block" }}
             >
+              <TrackHeaderArea
+                tracks={tracks}
+                width={100}
+                height={size.height}
+                scrollTop={scrollTop}
+              />
               {/* 描画順序: TrackAreaを先に書く (奥) */}
               <TrackArea
                 tracks={tracks}
@@ -219,9 +231,12 @@ const DawEditor = () => {
                 scrollX={scrollX}
                 dragPreview={dragPreview}
               />
-
               {/* 描画順序: Rulerを後に書く (手前・最前面) */}
-              <DawRuler width={CONTAINER_WIDTH} height={TRACK_AREA_OFFSET_Y} scrollX={scrollX} />
+              <DawRuler
+                width={TRACK_CONTAINER_WIDTH}
+                height={TRACK_AREA_OFFSET_Y}
+                scrollX={scrollX}
+              />
             </Stage>
           </div>
         </div>
@@ -230,8 +245,8 @@ const DawEditor = () => {
       {/* 水平方向スクロールバー */}
       {size.width > 0 && (
         <VirtualHorizontalScrollbar
-          viewportWidth={size.width}
-          contentWidth={CONTAINER_WIDTH}
+          viewportWidth={size.width - 100}
+          contentWidth={TRACK_CONTAINER_WIDTH}
           scrollX={scrollX}
           onScrollXChange={setScrollX}
         />

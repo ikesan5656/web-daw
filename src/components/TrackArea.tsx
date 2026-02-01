@@ -1,21 +1,22 @@
 import { Container, Graphics, Text } from "@pixi/react";
 import { Fragment, memo, useCallback, type ReactNode } from "react";
 import * as PIXI from "pixi.js";
-import { TRACK_HEADER_WIDTH } from "@/util/trackSettings";
+import {
+  TRACK_AREA_OFFSET_Y,
+  TRACK_BORDER_HEIGHT,
+  TRACK_COLOR_BG,
+  TRACK_CONTAINER_WIDTH,
+  TRACK_HEADER_WIDTH,
+  TRACK_HEIGHT,
+} from "@/util/trackSettings";
 //import type { AudioTrack } from "@/contexts/AudioEngineContext";
 import { AudioNote, AudioTrack } from "@/types/project";
 import { convertDurationToPixel, convertStartTimeToPosition } from "@/util/projectSettings";
+import { TrackSeparator } from "./PixiTrackComponents";
 
 // ==========================================
 // 定数定義 (親コンポーネントでも計算に使うため export します)
 // ==========================================
-export const TRACK_HEIGHT = 50; // トラックの高さ
-export const BORDER_HEIGHT = 3; // 線の太さ（高さ）
-export const TRACK_AREA_OFFSET_Y = 80; // 上部の余白（ルーラーの高さなど）
-const CONTAINER_WIDTH = 1000000;
-
-const COLOR_BORDER = 0xffffff; // 線の色
-const COLOR_BG = 0xd3d3d3; // トラック背景色
 
 // ==========================================
 // 型定義
@@ -28,21 +29,10 @@ interface TrackAreaProps {
   dragPreview: DragPreviewState;
 }
 
-// セパレーター（線）用のProps
-interface TrackSeparatorProps {
-  posY: number;
-  width: number;
-}
-
 interface TrackContainerProps {
   posY: number;
   width: number;
   children?: ReactNode;
-}
-
-interface TrackHeaderProps {
-  trackName: string;
-  color: number;
 }
 
 interface TrackNoteProps {
@@ -64,34 +54,13 @@ export interface DragPreviewState {
 }
 
 // ==========================================
-// 1. セパレーターコンポーネント (線)
-// ==========================================
-const TrackSeparator = memo(({ posY, width }: TrackSeparatorProps) => {
-  const draw = useCallback(
-    (g: PIXI.Graphics) => {
-      g.clear();
-      g.beginFill(COLOR_BORDER);
-      g.drawRect(0, 0, width, BORDER_HEIGHT);
-      g.endFill();
-    },
-    [width]
-  );
-
-  return (
-    <Container position={[0, posY]}>
-      <Graphics draw={draw} />
-    </Container>
-  );
-});
-
-// ==========================================
 // 2. トラックコンテナ (背景のみ)
 // ==========================================
 const TrackContainer = memo(({ posY, width, children }: TrackContainerProps) => {
   const drawBackground = useCallback(
     (g: PIXI.Graphics) => {
       g.clear();
-      g.beginFill(COLOR_BG);
+      g.beginFill(TRACK_COLOR_BG);
       g.drawRect(0, 0, width, TRACK_HEIGHT);
       g.endFill();
     },
@@ -150,51 +119,19 @@ const TrackNote = memo(({ noteName, color, posX, duration }: TrackNoteProps) => 
   );
 });
 
-const TrackHeader = memo(({ trackName, color }: TrackHeaderProps) => {
-  // console.log(`${trackName}再描画`); // ログがうるさい場合はコメントアウト
-  const drawRect = useCallback(
-    (g: PIXI.Graphics) => {
-      g.clear();
-      g.beginFill(color);
-      g.drawRect(0, 0, TRACK_HEADER_WIDTH, TRACK_HEIGHT);
-      g.endFill();
-    },
-    [color]
-  );
-
-  return (
-    <Container position={[0, 0]}>
-      <Graphics draw={drawRect} />
-      <Text
-        text={trackName}
-        style={
-          new PIXI.TextStyle({
-            fill: "white",
-            fontSize: 11,
-          })
-        }
-        anchor={[0, 0.5]}
-        x={10}
-        y={TRACK_HEIGHT / 2}
-      />
-    </Container>
-  );
-});
-
 const TrackList = memo(({ width, tracks }: TrackListProps) => {
-  const unitHeight = TRACK_HEIGHT + BORDER_HEIGHT;
+  const unitHeight = TRACK_HEIGHT + TRACK_BORDER_HEIGHT;
 
   return (
     <Container>
       {Array.from(tracks.values()).map((track, index) => {
-        const trackY = BORDER_HEIGHT + index * unitHeight;
+        const trackY = TRACK_BORDER_HEIGHT + index * unitHeight;
         const bottomLineY = trackY + TRACK_HEIGHT;
 
         return (
           <Fragment key={track.id || index}>
             {/* 1. トラック本体 */}
             <TrackContainer posY={trackY} width={width}>
-              <TrackHeader trackName={track.trackName} color={0x000000} />
               <Container position={[TRACK_HEADER_WIDTH, 0]}>
                 {Array.from((track.notes as Map<string, AudioNote>).values()).map(
                   (note: AudioNote) => {
@@ -222,12 +159,12 @@ const TrackList = memo(({ width, tracks }: TrackListProps) => {
 });
 
 const GhostNote = memo(({ x, trackIndex }: { x: number; trackIndex: number }) => {
-  const unitHeight = TRACK_HEIGHT + BORDER_HEIGHT;
+  const unitHeight = TRACK_HEIGHT + TRACK_BORDER_HEIGHT;
 
   // Y座標の計算:
   // (トラック番号 * 1ユニットの高さ) + 線(border)の高さ
   // これにより、線の上に重ならず、トラックの内側に綺麗に収まります
-  const y = trackIndex * unitHeight + BORDER_HEIGHT;
+  const y = trackIndex * unitHeight + TRACK_BORDER_HEIGHT;
 
   const draw = useCallback((g: PIXI.Graphics) => {
     g.clear();
@@ -258,22 +195,27 @@ const TrackArea = memo(({ tracks, scrollTop, scrollX, pixiRef, dragPreview }: Tr
   const Y_TOP_LINE = 0;
 
   return (
-    <Container
-      ref={pixiRef} // ★親が toLocal するためのRef
-      position={[-scrollX, currentY]} // ★スクロール反映
-      eventMode="static" // 内部でのクリック等が必要になった場合のため
-      width={CONTAINER_WIDTH}
-      scale={{ x: 1, y: 1 }} // Scale horizontally to match the new width
-      //resolution={window.devicePixelRatio} // Adjust resolution for better text rendering
-    >
-      {/* 1. 最上部のセパレーター */}
-      <TrackSeparator posY={Y_TOP_LINE} width={CONTAINER_WIDTH} />
+    <Container>
+      <Container
+        ref={pixiRef} // ★親が toLocal するためのRef
+        position={[-scrollX + 100, currentY]} // ★スクロール反映
+        anchor={[1.0, 0]}
+        eventMode="static" // 内部でのクリック等が必要になった場合のため
+        width={TRACK_CONTAINER_WIDTH}
+        scale={{ x: 1, y: 1 }} // Scale horizontally to match the new width
+        //resolution={window.devicePixelRatio} // Adjust resolution for better text rendering
+      >
+        {/* 1. 最上部のセパレーター */}
+        <TrackSeparator posY={Y_TOP_LINE} width={TRACK_CONTAINER_WIDTH} />
 
-      {/* 2. トラックリスト */}
-      <TrackList width={CONTAINER_WIDTH} tracks={tracks} />
+        {/* 2. トラックリスト */}
+        <TrackList width={TRACK_CONTAINER_WIDTH} tracks={tracks} />
 
-      {/* ★ ドラッグ中のみゴーストを表示 */}
-      {dragPreview.isVisible && <GhostNote x={dragPreview.x} trackIndex={dragPreview.trackIndex} />}
+        {/* ★ ドラッグ中のみゴーストを表示 */}
+        {dragPreview.isVisible && (
+          <GhostNote x={dragPreview.x} trackIndex={dragPreview.trackIndex} />
+        )}
+      </Container>
     </Container>
   );
 });

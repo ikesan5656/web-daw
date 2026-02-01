@@ -33,7 +33,7 @@ const BarNumbers = memo(({ scrollX, zoom }: { scrollX: number; zoom: number }) =
         id: barIdx,
         text: `${barIdx + 1}`,
         // Containerが -scrollX 動いているので、ここは絶対座標で計算
-        x: barIdx * BAR_WIDTH + TRACK_HEADER_WIDTH + 5,
+        x: barIdx * BAR_WIDTH + TRACK_HEADER_WIDTH + 5, // +5は少し余分に描画
         y: 20,
       };
     });
@@ -87,7 +87,7 @@ const DawRuler = memo(({ width, height, scrollX }: DawRulerProps) => {
   );
 
   return (
-    <Container>
+    <Container height={height}>
       {/* 背景は固定 (scrollXの影響を受けない) */}
       <Graphics draw={drawBackground} />
 
@@ -98,7 +98,7 @@ const DawRuler = memo(({ width, height, scrollX }: DawRulerProps) => {
       </Container>
 
       {/* トラックヘッダー部分の背景（文字がヘッダーに重なるのを防ぐ被せ） */}
-      <Graphics
+      {/*<Graphics
         draw={(g) => {
           g.clear();
           g.beginFill(0x222222);
@@ -108,7 +108,7 @@ const DawRuler = memo(({ width, height, scrollX }: DawRulerProps) => {
           g.moveTo(0, height);
           g.lineTo(TRACK_HEADER_WIDTH, height);
         }}
-      />
+      />*/}
     </Container>
   );
 });
