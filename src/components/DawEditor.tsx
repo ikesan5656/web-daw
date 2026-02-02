@@ -217,13 +217,7 @@ const DawEditor = () => {
               options={{ backgroundColor: 0x1e1e1e, antialias: true }}
               style={{ display: "block" }}
             >
-              <TrackHeaderArea
-                tracks={tracks}
-                width={100}
-                height={size.height}
-                scrollTop={scrollTop}
-              />
-              {/* 描画順序: TrackAreaを先に書く (奥) */}
+              {/* 1. トラックの中身（スクロールする） */}
               <TrackArea
                 tracks={tracks}
                 pixiRef={trackAreaPixiRef}
@@ -231,12 +225,17 @@ const DawEditor = () => {
                 scrollX={scrollX}
                 dragPreview={dragPreview}
               />
-              {/* 描画順序: Rulerを後に書く (手前・最前面) */}
-              <DawRuler
-                width={TRACK_CONTAINER_WIDTH}
-                height={TRACK_AREA_OFFSET_Y}
-                scrollX={scrollX}
+
+              {/* 2. トラックヘッダー（横には固定、縦には scrollTop で動く） */}
+              <TrackHeaderArea
+                tracks={tracks}
+                width={TRACK_HEADER_WIDTH}
+                height={size.height}
+                scrollTop={scrollTop}
               />
+
+              {/* 3. ルーラー（最前面に固定） */}
+              <DawRuler width={size.width} height={TRACK_AREA_OFFSET_Y} scrollX={scrollX} />
             </Stage>
           </div>
         </div>

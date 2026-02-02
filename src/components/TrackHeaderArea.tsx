@@ -6,7 +6,7 @@ import {
   TRACK_AREA_OFFSET_Y,
   TRACK_BORDER_HEIGHT,
   TRACK_COLOR_BG,
-  TRACK_CONTAINER_WIDTH,
+  //TRACK_CONTAINER_WIDTH,
   TRACK_HEADER_WIDTH,
   TRACK_HEIGHT,
 } from "@/util/trackSettings";
@@ -118,44 +118,46 @@ const TrackHeaderList = memo((props: TrackHeaderListProps) => {
 
 const TrackHeaderArea = memo((props: TrackHeaderAreaProps) => {
   const { tracks, width, height, scrollTop } = props;
-
   const currentY = TRACK_AREA_OFFSET_Y - scrollTop;
 
-  // 上部の隠れる部分
-  const drawBackground = useCallback(
+  const drawHeaderCover = useCallback(
     (g: PIXI.Graphics) => {
       g.clear();
-      g.beginFill(0x222222);
-      g.drawRect(0, 0, width, TRACK_AREA_OFFSET_Y);
+      // ヘッダー領域の背景（背後の波形を隠すために不透明な色で塗る）
+      g.beginFill(0x1e1e1e);
+      g.drawRect(0, 0, width, height);
       g.endFill();
-
-      g.lineStyle(2, 0x444444, 1);
-      g.moveTo(0, TRACK_AREA_OFFSET_Y);
-      g.lineTo(width, TRACK_AREA_OFFSET_Y);
     },
-    [width]
+    [width, height]
   );
 
-  return (
-    <Container
-      width={width}
-      height={height}
-      //options={{ backgroundColor: 0x1e1e1e, antialias: true }}
-      //style={{ display: "block" }}
-      scale={1}
-    >
-      <Container position={[0, currentY]} eventMode="static" scale={{ x: 1, y: 1 }}>
-        {/* 1. 最上部のセパレーター */}
-        <TrackSeparator posY={0} width={TRACK_HEADER_WIDTH} />
+  const drawTopStaticBg = useCallback((g: PIXI.Graphics) => {
+    g.clear();
+    // 背景色 (DawRulerと同じ色、またはエディタの背景色)
+    g.beginFill(0x222222);
+    // ルーラーの高さ(TRACK_AREA_OFFSET_Y)分だけ塗りつぶす
+    g.drawRect(0, 0, TRACK_HEADER_WIDTH, TRACK_AREA_OFFSET_Y);
+    g.endFill();
 
-        {/* 2. トラックリスト */}
-        <TrackHeaderList width={TRACK_CONTAINER_WIDTH} tracks={tracks} />
-        <Container />
+    // ルーラーの下線と同じ装飾
+    g.lineStyle(2, 0x444444, 1);
+    g.moveTo(0, TRACK_AREA_OFFSET_Y);
+    g.lineTo(TRACK_HEADER_WIDTH, TRACK_AREA_OFFSET_Y);
+  }, []);
+
+  return (
+    <Container>
+      {/* ヘッダー全体の背景被せ */}
+      <Graphics draw={drawHeaderCover} />
+
+      {/* 縦スクロールに同期するトラックリスト */}
+      <Container position={[0, currentY]}>
+        <TrackSeparator posY={0} width={width} />
+        <TrackHeaderList width={width} tracks={tracks} />
       </Container>
-      {/* 背景は固定 (scrollXの影響を受けない) */}
-      <Container>
-        <Graphics draw={drawBackground} />
-      </Container>
+
+      {/* ルーラーと重なる部分の隠し（上部固定） */}
+      <Graphics draw={drawTopStaticBg} />
     </Container>
   );
 });

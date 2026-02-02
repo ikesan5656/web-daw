@@ -187,35 +187,28 @@ const GhostNote = memo(({ x, trackIndex }: { x: number; trackIndex: number }) =>
 // Stageは親にあるので、ここは Container を返すだけにする
 // ==========================================
 const TrackArea = memo(({ tracks, scrollTop, scrollX, pixiRef, dragPreview }: TrackAreaProps) => {
-  // スクロール位置の計算
-  // 開始位置(80px) - 現在のスクロール量
   const currentY = TRACK_AREA_OFFSET_Y - scrollTop;
 
-  // 一番上の線: Y=0 (相対位置)
-  const Y_TOP_LINE = 0;
-
   return (
-    <Container>
-      <Container
-        ref={pixiRef} // ★親が toLocal するためのRef
-        position={[-scrollX + 100, currentY]} // ★スクロール反映
-        anchor={[1.0, 0]}
-        eventMode="static" // 内部でのクリック等が必要になった場合のため
-        width={TRACK_CONTAINER_WIDTH}
-        scale={{ x: 1, y: 1 }} // Scale horizontally to match the new width
-        //resolution={window.devicePixelRatio} // Adjust resolution for better text rendering
-      >
-        {/* 1. 最上部のセパレーター */}
-        <TrackSeparator posY={Y_TOP_LINE} width={TRACK_CONTAINER_WIDTH} />
+    // 全体の基準となるコンテナ（垂直スクロールのみ適用）
+    <Container position={[0, currentY]} ref={pixiRef} eventMode="static">
+      {/* 1. 横スクロールするレイヤー (波形・グリッドなど) */}
+      <Container x={-scrollX + TRACK_HEADER_WIDTH}>
+        {/* 最上部の線 */}
+        <TrackSeparator posY={0} width={TRACK_CONTAINER_WIDTH} />
 
-        {/* 2. トラックリスト */}
+        {/* トラックリスト (背景とノート) */}
         <TrackList width={TRACK_CONTAINER_WIDTH} tracks={tracks} />
 
-        {/* ★ ドラッグ中のみゴーストを表示 */}
+        {/* ドラッグ中のプレビュー */}
         {dragPreview.isVisible && (
           <GhostNote x={dragPreview.x} trackIndex={dragPreview.trackIndex} />
         )}
       </Container>
+
+      {/* 注: もし DawEditor.tsx 側で TrackHeaderArea を別に呼んでいる場合は、
+         このファイル内には書かず、DawEditor.tsx 側で順番（Z-index）を調整します。
+      */}
     </Container>
   );
 });

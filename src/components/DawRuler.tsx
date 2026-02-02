@@ -98,7 +98,7 @@ const DawRuler = memo(({ width, height, scrollX }: DawRulerProps) => {
       </Container>
 
       {/* トラックヘッダー部分の背景（文字がヘッダーに重なるのを防ぐ被せ） */}
-      {/*<Graphics
+      <Graphics
         draw={(g) => {
           g.clear();
           g.beginFill(0x222222);
@@ -108,7 +108,7 @@ const DawRuler = memo(({ width, height, scrollX }: DawRulerProps) => {
           g.moveTo(0, height);
           g.lineTo(TRACK_HEADER_WIDTH, height);
         }}
-      />*/}
+      />
     </Container>
   );
 });
