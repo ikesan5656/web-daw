@@ -83,7 +83,6 @@ const DawEditor = () => {
       // 2. toLocal変換
       const globalPoint = new PIXI.Point(globalX, globalY);
       const localPoint = trackAreaPixiRef.current.toLocal(globalPoint);
-      console.log(localPoint);
 
       // --- ここから範囲判定の追加 ---
 
@@ -115,11 +114,11 @@ const DawEditor = () => {
 
       setDragPreview({
         isVisible: true,
-        x: localPoint.x - TRACK_HEADER_WIDTH,
+        x: localPoint.x - TRACK_HEADER_WIDTH + scrollX,
         trackIndex: clampedIndex,
       });
     },
-    [tracks.size, unitHeight, containerRef, trackAreaPixiRef]
+    [tracks.size, unitHeight, containerRef, trackAreaPixiRef, scrollX]
   );
 
   const handleDrop = useCallback(
@@ -139,7 +138,8 @@ const DawEditor = () => {
         });
         return;
       }
-      const droppedX = localPoint.x - TRACK_HEADER_WIDTH;
+      const droppedX = localPoint.x - TRACK_HEADER_WIDTH + scrollX;
+      console.log(droppedX);
       const trackIndex = Math.floor(localPoint.y / unitHeight);
 
       if (trackIndex > tracks.size - 1 || trackIndex < 0) {
@@ -170,7 +170,7 @@ const DawEditor = () => {
         });
       }
     },
-    [containerRef, unitHeight, getTrackFromIndex, addNote, tracks, getAudioBufferFromFile]
+    [containerRef, unitHeight, getTrackFromIndex, addNote, tracks, getAudioBufferFromFile, scrollX]
   );
 
   const onDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
@@ -243,7 +243,7 @@ const DawEditor = () => {
       {/* 水平方向スクロールバー */}
       {size.width > 0 && (
         <VirtualHorizontalScrollbar
-          viewportWidth={size.width - 100}
+          viewportWidth={size.width}
           contentWidth={TRACK_CONTAINER_WIDTH}
           scrollX={scrollX}
           onScrollXChange={setScrollX}
