@@ -1,5 +1,5 @@
 import { PIXELS_PER_BAR, PIXELS_PER_BEAT } from "@/util/projectSettings";
-import { TRACK_HEADER_WIDTH } from "@/util/trackSettings";
+import { RULER_BAR_HEIGHT, RULER_BEAT_HEIGHT, TRACK_HEADER_WIDTH } from "@/util/trackSettings";
 import { Container, Graphics, Text } from "@pixi/react";
 import * as PIXI from "pixi.js";
 import { memo, useCallback, useMemo } from "react";
@@ -77,7 +77,7 @@ const DawRuler = memo(({ width, height, scrollX }: DawRulerProps) => {
       for (let i = startBeat; i <= endBeat; i++) {
         const x = i * PIXELS_PER_BEAT + TRACK_HEADER_WIDTH;
         const isBar = i % 4 === 0; // 4拍ごとに長い線（小節）
-        const tickHeight = isBar ? 20 : 10;
+        const tickHeight = isBar ? RULER_BAR_HEIGHT : RULER_BEAT_HEIGHT;
 
         g.moveTo(x, height);
         g.lineTo(x, height - tickHeight);

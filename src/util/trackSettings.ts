@@ -10,3 +10,7 @@ export const TRACK_BORDER_HEIGHT = 3;
 export const TRACK_AREA_OFFSET_Y = 80;
 // それぞれのトラックの高さ
 export const TRACK_HEIGHT = 50;
+// ルーラーの小節の高さ
+export const RULER_BAR_HEIGHT = 20;
+// ルーラーの拍の高さ
+export const RULER_BEAT_HEIGHT = 10;

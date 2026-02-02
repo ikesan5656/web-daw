@@ -7,6 +7,7 @@ import PlayHeader from "@/components/PlayHeader";
 import DawRuler from "@/components/DawRuler";
 import { useContainerSize } from "@/hooks/useContainerSize";
 import {
+  RULER_BAR_HEIGHT,
   TRACK_AREA_OFFSET_Y,
   TRACK_BORDER_HEIGHT,
   TRACK_CONTAINER_WIDTH,
@@ -17,6 +18,7 @@ import { useAudio } from "@/contexts/AudioEngineContext";
 import { convertPositionToStartTime } from "@/util/projectSettings";
 import { VirtualHorizontalScrollbar } from "./VirtualHorizontalScrollbar";
 import TrackHeaderArea from "./TrackHeaderArea";
+import PlaybackHead from "./PlaybackHead";
 
 // ... (スタイル定義 DawEditorContainer, TrackContainer はそのまま) ...
 const DawEditorContainer = styled(Box)({
@@ -235,6 +237,7 @@ const DawEditor = () => {
 
               {/* 3. ルーラー（最前面に固定） */}
               <DawRuler width={size.width} height={TRACK_AREA_OFFSET_Y} scrollX={scrollX} />
+              <PlaybackHead x={0} height={size.height - TRACK_AREA_OFFSET_Y + RULER_BAR_HEIGHT} />
             </Stage>
           </div>
         </div>
