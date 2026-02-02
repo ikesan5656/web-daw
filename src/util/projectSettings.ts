@@ -1,3 +1,5 @@
+import { TRACK_HEADER_WIDTH } from "./trackSettings";
+
 // 標準のBPM
 export const DEFAULT_BPM = 120;
 // 1拍あたりの秒数
@@ -73,7 +75,7 @@ export const convertStartTimeToPosition = (startTimeInSeconds: number): number =
   const beats = startTimeInSeconds / SECONDS_PER_BEAT;
 
   // 2. 拍数をピクセルに変換
-  const posX = beats * PIXELS_PER_BEAT;
+  const posX = beats * PIXELS_PER_BEAT - TRACK_HEADER_WIDTH;
 
   return posX;
 };

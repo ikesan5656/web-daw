@@ -54,7 +54,7 @@ const DawEditor = () => {
   // ★ドラッグプレビュー用のState
   const [dragPreview, setDragPreview] = useState<DragPreviewState>({
     isVisible: false,
-    x: 0,
+    x: 0, // トラックヘッダーを含まない座標
     trackIndex: 0,
   });
 
@@ -83,6 +83,7 @@ const DawEditor = () => {
       // 2. toLocal変換
       const globalPoint = new PIXI.Point(globalX, globalY);
       const localPoint = trackAreaPixiRef.current.toLocal(globalPoint);
+      console.log(localPoint);
 
       // --- ここから範囲判定の追加 ---
 
@@ -94,8 +95,6 @@ const DawEditor = () => {
       // もし TrackArea に width/height プロパティを設定しているならそれを使います
       const areaWidth = trackAreaPixiRef.current.width;
       const areaHeight = tracks.size * unitHeight; // トラック全体の高さ
-
-      console.log(localPoint.y);
 
       const isOutside =
         localPoint.x < TRACK_HEADER_WIDTH ||
@@ -116,7 +115,7 @@ const DawEditor = () => {
 
       setDragPreview({
         isVisible: true,
-        x: localPoint.x,
+        x: localPoint.x - TRACK_HEADER_WIDTH,
         trackIndex: clampedIndex,
       });
     },

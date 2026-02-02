@@ -98,6 +98,7 @@ const DawRuler = memo(({ width, height, scrollX }: DawRulerProps) => {
       </Container>
 
       {/* トラックヘッダー部分の背景（文字がヘッダーに重なるのを防ぐ被せ） */}
+      {/* TODO: 境目を分かるようにするためのデザイン */}
       <Graphics
         draw={(g) => {
           g.clear();

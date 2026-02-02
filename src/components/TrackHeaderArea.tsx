@@ -131,7 +131,7 @@ const TrackHeaderArea = memo((props: TrackHeaderAreaProps) => {
     [width, height]
   );
 
-  const drawTopStaticBg = useCallback((g: PIXI.Graphics) => {
+  /*const drawTopStaticBg = useCallback((g: PIXI.Graphics) => {
     g.clear();
     // 背景色 (DawRulerと同じ色、またはエディタの背景色)
     g.beginFill(0x222222);
@@ -143,7 +143,7 @@ const TrackHeaderArea = memo((props: TrackHeaderAreaProps) => {
     g.lineStyle(2, 0x444444, 1);
     g.moveTo(0, TRACK_AREA_OFFSET_Y);
     g.lineTo(TRACK_HEADER_WIDTH, TRACK_AREA_OFFSET_Y);
-  }, []);
+  }, []);*/
 
   return (
     <Container>
@@ -157,7 +157,7 @@ const TrackHeaderArea = memo((props: TrackHeaderAreaProps) => {
       </Container>
 
       {/* ルーラーと重なる部分の隠し（上部固定） */}
-      <Graphics draw={drawTopStaticBg} />
+      {/*<Graphics draw={drawTopStaticBg} />*/}
     </Container>
   );
 });

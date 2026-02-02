@@ -176,7 +176,8 @@ const GhostNote = memo(({ x, trackIndex }: { x: number; trackIndex: number }) =>
   }, []);
 
   return (
-    <Container position={[x, y]}>
+    /* トラックヘッダー分ずらす */
+    <Container position={[x /*- TRACK_HEADER_WIDTH*/, y]}>
       <Graphics draw={draw} />
     </Container>
   );
