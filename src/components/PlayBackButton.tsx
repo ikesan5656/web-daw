@@ -7,7 +7,7 @@ interface PlayBackButtonProps {
   isPlay: boolean;
 }
 
-const PlayBackButton = (props: PlayBackButtonProps) => {
+const PlaybackButton = (props: PlayBackButtonProps) => {
   const { onClick, isPlay } = props;
 
   return (
@@ -17,4 +17,4 @@ const PlayBackButton = (props: PlayBackButtonProps) => {
   );
 };
 
-export default PlayBackButton;
+export default PlaybackButton;
