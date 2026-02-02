@@ -4,7 +4,6 @@ import { useAudio } from "@/contexts/AudioEngineContext";
 export const HeaderContainer = styled(Box)({
   padding: "0",
   margin: "0",
-  background: "gray",
   width: "100%",
   height: 30,
   boxSizing: "border-box",
@@ -14,7 +13,7 @@ export const HeaderContainer = styled(Box)({
 });
 
 const AppHeader = () => {
-  const { addTrack, playNote, getTracksInfo } = useAudio();
+  const { addTrack, playNote, getTracksInfo, getCurrentTime } = useAudio();
   const testClick = () => {
     //initialize();
     /*playPiano(261.6); // ド
@@ -51,10 +50,15 @@ const AppHeader = () => {
     //playNote()
   };
 
+  const checkTime = () => {
+    console.log(getCurrentTime());
+  };
+
   return (
     <HeaderContainer>
       <button onClick={testClick}>add</button>
       <button onClick={test2}>info</button>
+      <button onClick={checkTime}>checktime</button>
     </HeaderContainer>
   );
 };

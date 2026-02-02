@@ -1,6 +1,7 @@
 import { Box, styled } from "@mui/material";
 import PlayBackButton from "./PlayBackButton";
 import { useAudio } from "@/contexts/AudioEngineContext";
+import PlayTimeCounter from "./PlayTimeCounter";
 
 const PlayHeaderContainer = styled(Box)({
   padding: "0",
@@ -29,6 +30,7 @@ const PlayHeader = () => {
 
   return (
     <PlayHeaderContainer>
+      <PlayTimeCounter />
       <PlayBackButton onClick={onPlay} isPlay={isPlay} />
     </PlayHeaderContainer>
   );

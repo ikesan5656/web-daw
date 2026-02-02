@@ -33,6 +33,7 @@ export interface AudioContextType {
   getTrackFromIndex: (index: number) => AudioTrack;
   getNoteById: (trackId: string, noteId: string) => AudioNote | null;
   isPlay: boolean;
+  getCurrentTime: () => number;
 }
 
 /*const defaultNotes = new Map<string, AudioNote>([
@@ -84,6 +85,7 @@ const AudioEngineProvider = ({ children }: { children: ReactNode }) => {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const masterGainRef = useRef<GainNode | null>(null);
   const activeSourcesRef = useRef<AudioBufferSourceNode[]>([]);
+  const startTime = useRef<number>(0);
 
   // AudioContextを取得、または生成するヘルパー関数
   const getContext = useCallback(() => {
@@ -209,6 +211,7 @@ const AudioEngineProvider = ({ children }: { children: ReactNode }) => {
       }
 
       setIsPlay(true);
+      startTime.current = ctx.currentTime;
       let maxDuration = 0;
       let lastSource: AudioBufferSourceNode | null = null;
       const newSources: AudioBufferSourceNode[] = [];
@@ -356,6 +359,11 @@ const AudioEngineProvider = ({ children }: { children: ReactNode }) => {
     [tracks]
   );
 
+  const getCurrentTime = useCallback((): number => {
+    if (!isPlay || !audioCtxRef.current) return 0;
+    return audioCtxRef.current.currentTime - startTime.current;
+  }, [isPlay]);
+
   useEffect(() => {
     const initializeAudio = async () => {
       await initialize();
@@ -382,6 +390,7 @@ const AudioEngineProvider = ({ children }: { children: ReactNode }) => {
       getTrackFromIndex,
       getNoteById,
       isPlay,
+      getCurrentTime,
     }),
     [
       initialize,
@@ -399,6 +408,7 @@ const AudioEngineProvider = ({ children }: { children: ReactNode }) => {
       getTrackFromIndex,
       getNoteById,
       isPlay,
+      getCurrentTime,
     ]
   );
 
