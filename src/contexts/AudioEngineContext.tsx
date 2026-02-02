@@ -18,6 +18,8 @@ export interface AudioContextType {
   initialize: () => Promise<void>;
   getAudioBufferFromFile: (file: File) => Promise<AudioBuffer>;
   playNote: (buffer: AudioBuffer, when: number, offset: number, trackNode: GainNode) => void;
+  playBackAll: (tracks: Map<string, AudioTrack>) => void;
+  stopAll: () => void;
   getContext: () => AudioContext | null;
   addTrack: () => void;
   deleteTrack: (id: string) => void;
@@ -30,6 +32,7 @@ export interface AudioContextType {
   getTracksInfo: () => Map<string, AudioTrack>;
   getTrackFromIndex: (index: number) => AudioTrack;
   getNoteById: (trackId: string, noteId: string) => AudioNote | null;
+  isPlay: boolean;
 }
 
 /*const defaultNotes = new Map<string, AudioNote>([
@@ -72,38 +75,15 @@ declare global {
 const AudioContext = createContext<AudioContextType | null>(null);
 
 const AudioEngineProvider = ({ children }: { children: ReactNode }) => {
-  /*const [tracks, setTracks] = useState<Map<string, AudioTrack>>(() => {
-    //Contextを作成 (SSR対策でwindowチェック)
-    if (typeof window === "undefined") return new Map();
-
-    const Ctx = window.AudioContext || window.webkitAudioContext;
-    const ctx = new Ctx();
-
-    // 最初のトラック用の Node を作成（この辺りはプロジェクト選択機能で解決予定）
-    const initialId = crypto.randomUUID();
-    const gainNode = ctx.createGain();
-    gainNode.connect(ctx.destination);
-
-    // 初期Mapを生成して返す
-    return new Map([
-      [
-        initialId,
-        {
-          id: initialId,
-          trackName: "Track 1",
-          trackNode: gainNode, // 最初から Node が入る
-          notes: new Map(),
-        },
-      ],
-    ]);
-  });*/
   const [tracks, setTracks] = useState<Map<string, AudioTrack>>(new Map());
+  const [isPlay, setIsPlay] = useState<boolean>(false);
 
   // ポイント1: AudioContextの実体は useRef で持つ (Stateにしない)
   // これにより、AudioContextの中身が変わってもReactの再描画は発生しない
   //const { addTrack } = useTrackDataStore();
   const audioCtxRef = useRef<AudioContext | null>(null);
   const masterGainRef = useRef<GainNode | null>(null);
+  const activeSourcesRef = useRef<AudioBufferSourceNode[]>([]);
 
   // AudioContextを取得、または生成するヘルパー関数
   const getContext = useCallback(() => {
@@ -189,12 +169,6 @@ const AudioEngineProvider = ({ children }: { children: ReactNode }) => {
     const ctx = getContext();
     if (!ctx) return;
 
-    /*if (ctx && ctx.state === "suspended") {
-      console.log("resume");
-      await ctx.resume();
-    }*/
-
-    console.log(masterGainRef.current);
     // マスターノード作成、接続（初回のみ）
     if (!masterGainRef.current) {
       const masterGain = ctx.createGain();
@@ -219,15 +193,78 @@ const AudioEngineProvider = ({ children }: { children: ReactNode }) => {
       // トラックのノードに接続（使い捨てのため再生の度に接続し直す）
       source.connect(trackNode);
 
-      // 再生終了時に参照を外すクリーンアップ
-      /*source.onended = () => {
-        source = null;
-      };*/
-
       source.start(ctx.currentTime + when, offset);
     },
     [initialize, getContext]
   );
+
+  const playBackAll = useCallback(
+    async (tracks: Map<string, AudioTrack>) => {
+      await initialize();
+      const ctx = getContext();
+      if (!ctx) return;
+
+      if (ctx.state === "suspended") {
+        await ctx.resume();
+      }
+
+      setIsPlay(true);
+      let maxDuration = 0;
+      let lastSource: AudioBufferSourceNode | null = null;
+      const newSources: AudioBufferSourceNode[] = [];
+
+      tracks.forEach((track) => {
+        track.notes.forEach((note) => {
+          if (!note.audioBuffer) return;
+          const source = ctx.createBufferSource();
+          source.buffer = note.audioBuffer;
+          source.connect(track.trackNode);
+          const startTime = ctx.currentTime + note.when;
+
+          const endTime = startTime + note.audioBuffer.duration;
+
+          // 一番最後に終わる時間を記録
+          if (endTime > maxDuration) {
+            maxDuration = endTime;
+            lastSource = source;
+          }
+
+          source.start(ctx.currentTime + note.when, 0);
+          newSources.push(source);
+        });
+      });
+
+      // 最後のノードが終了したら isPlay を false にする
+      if (lastSource) {
+        (lastSource as AudioBufferSourceNode).onended = () => {
+          // すべてのソースが止まったことを保証するため、一応 stopAll を呼ぶ
+          setIsPlay(false);
+          activeSourcesRef.current = [];
+        };
+      } else {
+        // 再生するものが何もない場合
+        setIsPlay(false);
+      }
+
+      activeSourcesRef.current = newSources;
+    },
+    [getContext, initialize]
+  );
+
+  const stopAll = useCallback(() => {
+    // 全てのSourceNodeを停止
+    activeSourcesRef.current.forEach((source) => {
+      try {
+        source.stop();
+      } catch (e) {
+        console.error(e);
+      }
+      source.disconnect();
+    });
+    // リストを空にする
+    activeSourcesRef.current = [];
+    setIsPlay(false);
+  }, []);
 
   // 音を鳴らす関数の例
   const playTone = useCallback(
@@ -335,6 +372,8 @@ const AudioEngineProvider = ({ children }: { children: ReactNode }) => {
       playPiano,
       getAudioBufferFromFile,
       playNote,
+      playBackAll,
+      stopAll,
       getContext,
       addTrack,
       deleteTrack,
@@ -342,6 +381,7 @@ const AudioEngineProvider = ({ children }: { children: ReactNode }) => {
       getTracksInfo,
       getTrackFromIndex,
       getNoteById,
+      isPlay,
     }),
     [
       initialize,
@@ -349,6 +389,8 @@ const AudioEngineProvider = ({ children }: { children: ReactNode }) => {
       playPiano,
       getAudioBufferFromFile,
       playNote,
+      playBackAll,
+      stopAll,
       getContext,
       addTrack,
       deleteTrack,
@@ -356,6 +398,7 @@ const AudioEngineProvider = ({ children }: { children: ReactNode }) => {
       getTracksInfo,
       getTrackFromIndex,
       getNoteById,
+      isPlay,
     ]
   );
 

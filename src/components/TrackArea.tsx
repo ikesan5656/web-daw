@@ -81,6 +81,7 @@ const TrackContainer = memo(({ posY, width, children }: TrackContainerProps) => 
 // 3. トラックコンテンツ (中身)
 // ==========================================
 const TrackNote = memo(({ noteName, color, posX, duration }: TrackNoteProps) => {
+  console.log("再描画", noteName);
   const width = convertDurationToPixel(duration);
   const drawRect = useCallback(
     (g: PIXI.Graphics) => {

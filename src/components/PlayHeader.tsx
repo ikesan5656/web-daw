@@ -1,4 +1,6 @@
 import { Box, styled } from "@mui/material";
+import PlayBackButton from "./PlayBackButton";
+import { useAudio } from "@/contexts/AudioEngineContext";
 
 const PlayHeaderContainer = styled(Box)({
   padding: "0",
@@ -9,14 +11,27 @@ const PlayHeaderContainer = styled(Box)({
   boxSizing: "border-box",
   display: "flex",
   flexFlow: "row",
-  backgroundColor: "orange"
+  justifyContent: "center",
+  backgroundColor: "orange",
 });
 
 const PlayHeader = () => {
+  const { playBackAll, stopAll, getTracksInfo, isPlay } = useAudio();
 
-  return(
-    <PlayHeaderContainer/>
-  )
-}
+  const onPlay = async () => {
+    if (isPlay) {
+      stopAll();
+    } else {
+      const tracks = getTracksInfo();
+      await playBackAll(tracks);
+    }
+  };
+
+  return (
+    <PlayHeaderContainer>
+      <PlayBackButton onClick={onPlay} isPlay={isPlay} />
+    </PlayHeaderContainer>
+  );
+};
 
 export default PlayHeader;
