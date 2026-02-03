@@ -19,12 +19,12 @@ const PlayHeaderContainer = styled(Box)({
 const PlayHeader = () => {
   const { playBackAll, stopAll, getTracksInfo, isPlay } = useAudio();
 
-  const onPlay = async () => {
+  const onPlay = () => {
     if (isPlay) {
       stopAll();
     } else {
       const tracks = getTracksInfo();
-      await playBackAll(tracks);
+      playBackAll(tracks);
     }
   };
 

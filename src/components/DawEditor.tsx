@@ -7,14 +7,13 @@ import PlayHeader from "@/components/PlayHeader";
 import DawRuler from "@/components/DawRuler";
 import { useContainerSize } from "@/hooks/useContainerSize";
 import {
-  RULER_BAR_HEIGHT,
   TRACK_AREA_OFFSET_Y,
   TRACK_BORDER_HEIGHT,
   TRACK_CONTAINER_WIDTH,
   TRACK_HEADER_WIDTH,
   TRACK_HEIGHT,
 } from "@/util/trackSettings";
-import { useAudio } from "@/contexts/AudioEngineContext";
+import { AudioContext, useAudio } from "@/contexts/AudioEngineContext";
 import { convertPositionToStartTime } from "@/util/projectSettings";
 import { VirtualHorizontalScrollbar } from "./VirtualHorizontalScrollbar";
 import TrackHeaderArea from "./TrackHeaderArea";
@@ -47,7 +46,8 @@ const TrackContainer = styled(Box)({
 });
 
 const DawEditor = () => {
-  const { getAudioBufferFromFile, getTracksInfo, getTrackFromIndex, addNote } = useAudio();
+  const audioValue = useAudio();
+  const { getAudioBufferFromFile, getTracksInfo, getTrackFromIndex, addNote } = audioValue;
   const tracks = getTracksInfo();
 
   const { ref: containerRef, size } = useContainerSize();
@@ -218,26 +218,28 @@ const DawEditor = () => {
               options={{ backgroundColor: 0x1e1e1e, antialias: true }}
               style={{ display: "block" }}
             >
-              {/* 1. トラックの中身（スクロールする） */}
-              <TrackArea
-                tracks={tracks}
-                pixiRef={trackAreaPixiRef}
-                scrollTop={scrollTop}
-                scrollX={scrollX}
-                dragPreview={dragPreview}
-              />
+              <AudioContext.Provider value={audioValue}>
+                {/* 1. トラックの中身（スクロールする） */}
+                <TrackArea
+                  tracks={tracks}
+                  pixiRef={trackAreaPixiRef}
+                  scrollTop={scrollTop}
+                  scrollX={scrollX}
+                  dragPreview={dragPreview}
+                />
 
-              {/* 2. トラックヘッダー（横には固定、縦には scrollTop で動く） */}
-              <TrackHeaderArea
-                tracks={tracks}
-                width={TRACK_HEADER_WIDTH}
-                height={size.height}
-                scrollTop={scrollTop}
-              />
+                {/* 2. トラックヘッダー（横には固定、縦には scrollTop で動く） */}
+                <TrackHeaderArea
+                  tracks={tracks}
+                  width={TRACK_HEADER_WIDTH}
+                  height={size.height}
+                  scrollTop={scrollTop}
+                />
 
-              {/* 3. ルーラー（最前面に固定） */}
-              <DawRuler width={size.width} height={TRACK_AREA_OFFSET_Y} scrollX={scrollX} />
-              <PlaybackHead x={0} height={size.height - TRACK_AREA_OFFSET_Y + RULER_BAR_HEIGHT} />
+                {/* 3. ルーラー（最前面に固定） */}
+                <DawRuler width={size.width} height={TRACK_AREA_OFFSET_Y} scrollX={scrollX} />
+                <PlaybackHead scrollX={scrollX} />
+              </AudioContext.Provider>
             </Stage>
           </div>
         </div>

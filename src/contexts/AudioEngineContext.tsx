@@ -73,7 +73,8 @@ declare global {
   }
 }
 
-const AudioContext = createContext<AudioContextType | null>(null);
+// eslint-disable-next-line react-refresh/only-export-components
+export const AudioContext = createContext<AudioContextType | null>(null);
 
 const AudioEngineProvider = ({ children }: { children: ReactNode }) => {
   const [tracks, setTracks] = useState<Map<string, AudioTrack>>(new Map());
