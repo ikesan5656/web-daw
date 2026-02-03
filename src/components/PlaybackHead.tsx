@@ -59,9 +59,11 @@ const PlaybackHead = (props: PlaybackHeadProps) => {
   // 秒数をピクセルに変換 (convertStartTimeToPosition を利用)
   const currentTime = isPlay ? getCurrentTime() : 0;
   const x = convertStartTimeToPosition(currentTime) + TRACK_HEADER_WIDTH;
+  const currentX = x + TRACK_HEADER_WIDTH - scrollX;
+  const isVisible = currentX >= TRACK_HEADER_WIDTH;
 
   return (
-    <Container x={x + TRACK_HEADER_WIDTH - scrollX} y={TRACK_AREA_OFFSET_Y - 15}>
+    <Container x={currentX} y={TRACK_AREA_OFFSET_Y - 15} visible={isVisible}>
       <Graphics draw={draw} />
     </Container>
   );
