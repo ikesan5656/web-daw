@@ -1,0 +1,40 @@
+name: Deploy to S3
+
+on:
+  push:
+    branches:
+      - develop
+
+env:
+  # GitHubActionsOIDCRole：作成したIAMロール名
+  AWS_ROLE_ARN: arn:aws:iam::326548700769:role/GitHubActionsOIDCRole
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # チェックアウトするアクション
+      - uses: actions/checkout@v4
+      # 特定バージョンのnodeを設定するアクション
+      - name: Use NodeJS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24 # 24系バージョン追従
+          cache: "pnpm"
+      - name: Enable pnpm
+        run: corepack enable
+      # dependencyのクリーンインストール
+      - run: pnpm install --frozen-lockfile
+      # ビルド
+      - run: pnpm run build
+      # awsへのアクセス情報を設定
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ap-northeast-1
+      # S3にビルドしたものをアップロード
+      - run: aws s3 cp --recursive build s3://web-daw-app/
