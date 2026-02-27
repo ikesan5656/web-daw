@@ -24,11 +24,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24 # 24系バージョン追従
-          cache: "pnpm"
       - name: Enable pnpm
         run: |
           corepack enable
           corepack prepare pnpm@latest --activate
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
       # dependencyのクリーンインストール
       - run: pnpm install --frozen-lockfile
       # ビルド
